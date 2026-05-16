@@ -260,9 +260,12 @@
   
   .expense-row {
     display: grid;
-    grid-template-columns: 1fr 160px auto;
+    grid-template-columns: 1fr 140px 140px auto;
     gap: 10px;
     margin-bottom: 8px;
+  }
+  .expense-row.no-payer {
+    grid-template-columns: 1fr 140px auto;
   }
   
   .expense-total {
@@ -320,7 +323,8 @@
   
   @media (max-width: 640px) {
     .section { padding: 16px; }
-    .expense-row { grid-template-columns: 1fr 120px auto; }
+    .expense-row { grid-template-columns: 1fr 100px 100px auto; gap: 6px; }
+    .expense-row.no-payer { grid-template-columns: 1fr 120px auto; }
     th, td { padding: 8px 4px; font-size: 12px; }
     .expense-total-value { font-size: 20px; }
   }
@@ -361,6 +365,9 @@
   <div id="expense-list"></div>
   <div class="expense-row" style="margin-top: 10px;">
     <input type="text" id="expense-name" placeholder="항목 (예: 대관료, 피자)">
+    <select id="expense-payer">
+      <option value="">결제자 선택</option>
+    </select>
     <input type="number" id="expense-amount" placeholder="금액" min="0">
     <button class="btn-gold btn-small" onclick="addExpense()">추가</button>
   </div>
@@ -384,6 +391,7 @@
         <th>남은 금액</th>
         <th>실제 손익</th>
         <th>비용 부담</th>
+        <th>결제 환급</th>
         <th>최종 정산</th>
       </tr>
     </thead>
@@ -532,19 +540,29 @@ function updateEntry(sessionId, playerId, field, value) {
 function addExpense() {
   const name = document.getElementById('expense-name').value.trim();
   const amount = parseFloat(document.getElementById('expense-amount').value) || 0;
+  const payerId = document.getElementById('expense-payer').value || null;
   if (!name || amount <= 0) {
     alert('항목 이름과 금액을 모두 입력해주세요');
     return;
   }
-  state.expenses.push({ id: uid(), name, amount });
+  state.expenses.push({ id: uid(), name, amount, payerId });
   document.getElementById('expense-name').value = '';
   document.getElementById('expense-amount').value = '';
+  document.getElementById('expense-payer').value = '';
   save(); render();
 }
 
 function removeExpense(id) {
   state.expenses = state.expenses.filter(e => e.id !== id);
   save(); render();
+}
+
+function updateExpensePayer(id, payerId) {
+  const exp = state.expenses.find(e => e.id === id);
+  if (exp) {
+    exp.payerId = payerId || null;
+    save(); render();
+  }
 }
 
 // ========== Rendering ==========
@@ -647,17 +665,34 @@ function renderSessions() {
 }
 
 function renderExpenses() {
+  // 입력 영역 결제자 드롭다운 옵션 채우기
+  const payerSelect = document.getElementById('expense-payer');
+  const currentSelected = payerSelect.value;
+  payerSelect.innerHTML = '<option value="">결제자 선택</option>' +
+    state.participants.map(p => 
+      `<option value="${p.id}">${escapeHtml(p.name)}</option>`
+    ).join('');
+  payerSelect.value = currentSelected;
+  
   const el = document.getElementById('expense-list');
   if (state.expenses.length === 0) {
     el.innerHTML = '<div class="empty" style="padding: 10px;">아직 항목이 없어요</div>';
   } else {
-    el.innerHTML = state.expenses.map(e => `
-      <div class="expense-row" style="margin-bottom: 6px;">
-        <div style="display: flex; align-items: center; padding: 0 4px;">${escapeHtml(e.name)}</div>
-        <div style="text-align: right; padding: 8px; color: var(--gold); font-variant-numeric: tabular-nums;">${fmt(e.amount)}</div>
-        <button class="btn-danger" onclick="removeExpense('${e.id}')">×</button>
-      </div>
-    `).join('');
+    el.innerHTML = state.expenses.map(e => {
+      // 각 비용 항목의 결제자 드롭다운
+      const payerOptions = '<option value="">결제자 없음</option>' +
+        state.participants.map(p => 
+          `<option value="${p.id}" ${e.payerId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+        ).join('');
+      return `
+        <div class="expense-row" style="margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; padding: 0 4px;">${escapeHtml(e.name)}</div>
+          <select onchange="updateExpensePayer('${e.id}', this.value)" style="font-size: 12px;">${payerOptions}</select>
+          <div style="text-align: right; padding: 8px; color: var(--gold); font-variant-numeric: tabular-nums;">${fmt(e.amount)}</div>
+          <button class="btn-danger" onclick="removeExpense('${e.id}')">×</button>
+        </div>
+      `;
+    }).join('');
   }
   // 총 비용 표시
   const total = state.expenses.reduce((s, e) => s + e.amount, 0);
@@ -685,28 +720,39 @@ function renderSummary() {
   
   const totalExpense = state.expenses.reduce((s, e) => s + e.amount, 0);
   
+  // 결제자별 환급액 계산
+  const paymentRefund = {};
+  state.participants.forEach(p => { paymentRefund[p.id] = 0; });
+  state.expenses.forEach(e => {
+    if (e.payerId && paymentRefund[e.payerId] !== undefined) {
+      paymentRefund[e.payerId] += e.amount;
+    }
+  });
+  
   // 흑자 플레이어 풀 (실제 손익 기준)
   const profitPlayers = state.participants.filter(p => playerStats[p.id].actualPnl > 0);
   const totalProfit = profitPlayers.reduce((s, p) => s + playerStats[p.id].actualPnl, 0);
   
-  // 비용 분담 (실제 손익 비율, 반올림)
+  // 비용 분담 (실제 손익 비율, 1000원 단위 반올림)
   const expenseShare = {};
   state.participants.forEach(p => { expenseShare[p.id] = 0; });
   if (totalProfit > 0) {
     profitPlayers.forEach(p => {
-      expenseShare[p.id] = Math.round(totalExpense * (playerStats[p.id].actualPnl / totalProfit));
+      const raw = totalExpense * (playerStats[p.id].actualPnl / totalProfit);
+      expenseShare[p.id] = Math.round(raw / 1000) * 1000;
     });
   }
   
   // 정산 테이블
   const tbody = document.getElementById('settlement-body');
   if (state.participants.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">참가자가 없어요</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">참가자가 없어요</td></tr>';
   } else {
     tbody.innerHTML = state.participants.map(p => {
       const s = playerStats[p.id];
       const share = expenseShare[p.id];
-      const final = s.actualPnl - share;
+      const refund = paymentRefund[p.id];
+      const final = s.actualPnl - share + refund;
       const cls = final > 0 ? 'profit' : final < 0 ? 'loss' : 'zero';
       const pnlCls = s.actualPnl > 0 ? 'profit' : s.actualPnl < 0 ? 'loss' : 'zero';
       return `
@@ -716,6 +762,7 @@ function renderSummary() {
           <td>${fmt(s.remain)}</td>
           <td class="${pnlCls}">${s.actualPnl > 0 ? '+' : ''}${fmt(s.actualPnl)}</td>
           <td>${share > 0 ? '−' + fmt(share) : '—'}</td>
+          <td>${refund > 0 ? '+' + fmt(refund) : '—'}</td>
           <td class="${cls}">${final > 0 ? '+' : ''}${fmt(final)}</td>
         </tr>
       `;
@@ -724,17 +771,32 @@ function renderSummary() {
   
   // 분담 방식 안내
   const note = document.getElementById('settlement-note');
+  const totalRefund = Object.values(paymentRefund).reduce((s, v) => s + v, 0);
+  const unpaidExpense = totalExpense - totalRefund;
+  
+  let noteHtml = '';
   if (totalExpense > 0 && totalProfit > 0) {
     const detail = profitPlayers.map(p => {
       const ratio = (playerStats[p.id].actualPnl / totalProfit * 100).toFixed(1);
       return `${p.name}: ${ratio}% (${fmt(expenseShare[p.id])})`;
     }).join(' · ');
-    note.innerHTML = `<strong style="color: var(--gold);">비용 분담 방식</strong><br>총 비용 ${fmt(totalExpense)}원을 흑자 플레이어들이 흑자 비율대로 반올림하여 부담합니다.<br>${detail}`;
+    noteHtml = `<strong style="color: var(--gold);">비용 분담 방식</strong><br>총 비용 ${fmt(totalExpense)}원을 흑자 플레이어들이 흑자 비율대로 천 원 단위에서 반올림하여 부담합니다.<br>${detail}`;
+    
+    // 결제자 환급 안내
+    const refunders = state.participants.filter(p => paymentRefund[p.id] > 0);
+    if (refunders.length > 0) {
+      const refundDetail = refunders.map(p => `${p.name}: +${fmt(paymentRefund[p.id])}`).join(' · ');
+      noteHtml += `<br><br><strong style="color: var(--gold);">결제 환급</strong><br>${refundDetail}`;
+    }
+    if (unpaidExpense > 0) {
+      noteHtml += `<br><br><span style="color: var(--red);">⚠ 결제자 미지정 비용: ${fmt(unpaidExpense)}원</span>`;
+    }
   } else if (totalExpense > 0) {
-    note.innerHTML = `<strong style="color: var(--gold);">알림</strong> · 흑자 플레이어가 없어 비용 분담이 계산되지 않았어요. 모두 적자면 별도 협의가 필요해요.`;
+    noteHtml = `<strong style="color: var(--gold);">알림</strong> · 흑자 플레이어가 없어 비용 분담이 계산되지 않았어요. 모두 적자면 별도 협의가 필요해요.`;
   } else {
-    note.innerHTML = `비용을 입력하면 흑자 플레이어들의 비용 분담이 자동 계산돼요.`;
+    noteHtml = `비용을 입력하면 흑자 플레이어들의 비용 분담이 자동 계산돼요.`;
   }
+  note.innerHTML = noteHtml;
 }
 
 function render() {
@@ -772,14 +834,37 @@ async function shareImage() {
   btn.textContent = '⏳ 생성 중...';
   btn.disabled = true;
   
+  // 데스크탑 너비로 강제 캡쳐를 위한 임시 스타일 적용
+  const DESKTOP_WIDTH = 1060; // 컨테이너 max-width 1100 - padding 고려
+  const originalCssText = section.style.cssText;
+  const originalBodyOverflow = document.body.style.overflow;
+  
+  // 캡쳐용 임시 스타일
+  section.style.width = DESKTOP_WIDTH + 'px';
+  section.style.maxWidth = 'none';
+  section.style.position = 'fixed';
+  section.style.left = '-9999px';
+  section.style.top = '0';
+  section.style.zIndex = '-1';
+  document.body.style.overflow = 'hidden';
+  
   try {
-    // 1. 정산 섹션을 캔버스로 캡쳐
+    // DOM 렌더링 반영 대기
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // 1. 정산 섹션을 캔버스로 캡쳐 (데스크탑 너비)
     const canvas = await html2canvas(section, {
       backgroundColor: '#0a0e0a',
       scale: 2,
+      width: DESKTOP_WIDTH,
+      windowWidth: DESKTOP_WIDTH,
       logging: false,
       useCORS: true
     });
+    
+    // 원래 스타일 복원
+    section.style.cssText = originalCssText;
+    document.body.style.overflow = originalBodyOverflow;
     
     // 2. Blob 생성
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -794,16 +879,14 @@ async function shareImage() {
           title: '홀덤 정산 결과',
           text: `홀덤 정산 결과 (${state.date || ''})`
         });
-        // 공유 성공
         return;
       } catch (err) {
-        // 사용자가 취소했거나 실패 → 다운로드로 fallback
-        if (err.name === 'AbortError') return; // 사용자가 취소한 경우 조용히 종료
+        if (err.name === 'AbortError') return;
         console.warn('Share API 실패, 다운로드로 전환:', err);
       }
     }
     
-    // 4. Fallback: 그냥 다운로드 (데스크톱 또는 미지원 브라우저)
+    // 4. Fallback: 다운로드
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -811,13 +894,15 @@ async function shareImage() {
     a.click();
     URL.revokeObjectURL(url);
     
-    // 데스크톱에서는 안내 메시지
     if (!navigator.canShare) {
       setTimeout(() => {
         alert('이미지가 다운로드 되었어요!\n카톡 채팅창에 끌어다 놓으시면 공유 가능합니다.');
       }, 300);
     }
   } catch(err) {
+    // 에러 발생 시에도 스타일 복원
+    section.style.cssText = originalCssText;
+    document.body.style.overflow = originalBodyOverflow;
     alert('이미지 생성 실패: ' + err.message);
   } finally {
     btn.textContent = originalText;
