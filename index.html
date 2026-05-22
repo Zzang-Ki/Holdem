@@ -245,6 +245,29 @@
     font-weight: 500;
     letter-spacing: 0.5px;
   }
+  /* 세션 접기/펼치기 */
+  .collapse-toggle {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--gold);
+    font-size: 11px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+  }
+  .collapse-toggle:hover { color: var(--gold-soft); border: none; background: transparent; }
+  .session-card.collapsed .session-header {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .session-card.collapsed .session-body { display: none; }
   .session-header {
     display: flex;
     justify-content: space-between;
@@ -408,12 +431,121 @@
     font-size: 13px;
   }
   
-  .toolbar {
+  /* 하단 고정 푸터 */
+  .toolbar-fixed {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(30, 36, 51, 0.07);
+    padding: 12px 20px;
+  }
+  .toolbar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toolbar-row {
     display: flex;
     gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-    flex-wrap: wrap;
+  }
+  .toolbar-row button { flex: 1; padding: 11px; }
+  .btn-action {
+    background: var(--red);
+    color: #ffffff;
+    border-color: var(--red);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-action svg { flex: 0 0 auto; }
+  .btn-action:hover {
+    background: #b92f3e;
+    color: #ffffff;
+    border-color: #b92f3e;
+  }
+  /* 고정 푸터에 본문이 가리지 않도록 여백 확보 */
+  .footer-spacer { height: 130px; }
+
+  /* 전체 초기화 확인 모달 */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(30, 36, 51, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 28px 24px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(30, 36, 51, 0.25);
+    animation: modalPop 0.18s ease-out;
+  }
+  @keyframes modalPop {
+    from { transform: scale(0.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-title {
+    font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 14px;
+  }
+  .modal-desc {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+  .modal-desc strong { color: var(--red); }
+  .modal-box input {
+    width: 100%;
+    font-size: 16px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    text-align: center;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .modal-actions button {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+  .modal-confirm {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+    font-weight: 700;
+  }
+  .modal-confirm:hover {
+    background: #b92f3e;
+    color: #fff;
+    border-color: #b92f3e;
   }
   
   .date-row {
@@ -554,13 +686,10 @@
     /* 플레이어 칩 더 크게 */
     .player-chip { font-size: 14px; padding: 8px 14px; }
 
-    /* 툴바 버튼 풀폭 2열 */
-    .toolbar { gap: 8px; }
-    .toolbar button {
-      flex: 1 1 calc(50% - 4px);
-      padding: 12px 8px;
-      font-size: 12px;
-    }
+    /* 고정 푸터 - 모바일 */
+    .toolbar-fixed { padding: 10px 12px; }
+    .toolbar-row button { padding: 12px 8px; font-size: 12px; }
+    .footer-spacer { height: 120px; }
 
     .expense-total-value { font-size: 22px; }
     .stat-value { font-size: 22px; }
@@ -680,14 +809,43 @@
   <div id="settlement-note" style="margin-top: 16px; padding: 14px; background: var(--bg-elev); border-left: 3px solid var(--gold); font-size: 12px; color: var(--text-dim); line-height: 1.7;"></div>
 </div>
 
-<div class="toolbar">
-  <button class="btn-gold" onclick="shareImage()">📤 공유하기</button>
-  <button onclick="exportData()">기록 저장하기</button>
-  <button onclick="document.getElementById('import-file').click()">기록 불러오기</button>
-  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-  <button class="btn-danger" onclick="resetAll()">전체 초기화</button>
+<div class="toolbar-fixed">
+  <div class="toolbar-inner">
+    <div class="toolbar-row">
+      <button onclick="exportData()">기록 저장하기</button>
+      <button onclick="document.getElementById('import-file').click()">기록 불러오기</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="toolbar-row">
+      <button class="btn-action" onclick="shareImage()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        공유하기
+      </button>
+      <button class="btn-action" onclick="resetAll()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        전체 초기화
+      </button>
+    </div>
+  </div>
 </div>
 
+</div>
+<div class="footer-spacer"></div>
+
+<!-- 전체 초기화 확인 모달 -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal-box">
+    <div class="modal-title">⚠️ 전체 초기화</div>
+    <div class="modal-desc">
+      모든 기록(참가자, 세션, 비용, 자동완성 이름)이 <strong>영구 삭제</strong>됩니다.<br>
+      이 동작은 되돌릴 수 없어요.<br><br>
+      정말 초기화하시겠어요?
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeResetModal()">취소</button>
+      <button class="btn-danger modal-confirm" onclick="confirmReset()">초기화</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -813,6 +971,14 @@ function removeSession(id) {
 function renameSession(id, name) {
   const s = state.sessions.find(s => s.id === id);
   if (s) { s.name = name; save(); }
+}
+
+function toggleSession(id) {
+  const s = state.sessions.find(s => s.id === id);
+  if (!s) return;
+  s.collapsed = !s.collapsed;
+  save();
+  renderSessions();
 }
 
 function updateEntry(sessionId, playerId, field, value) {
@@ -976,11 +1142,13 @@ function renderSessions() {
     const isValid = totalBuyin === totalRemain;
     const hasAnyValue = totalBuyin > 0 || totalRemain > 0;
     const showWarning = hasParticipants && hasAnyValue && !isValid;
+    const collapsed = !!s.collapsed;
     
     return `
-    <div class="session-card session-${index % 2 === 0 ? 'even' : 'odd'}${showWarning ? ' invalid' : ''}" data-session="${s.id}">
+    <div class="session-card session-${index % 2 === 0 ? 'even' : 'odd'}${showWarning ? ' invalid' : ''}${collapsed ? ' collapsed' : ''}" data-session="${s.id}">
       <div class="session-header">
-        <div style="display: flex; align-items: center; flex: 1; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; flex: 1; flex-wrap: wrap; gap: 4px;">
+          <button class="collapse-toggle" onclick="toggleSession('${s.id}')" title="${collapsed ? '펼치기' : '접기'}">${collapsed ? '▶' : '▼'}</button>
           <input type="text" value="${escapeHtml(s.name)}" 
                  onchange="renameSession('${s.id}', this.value)"
                  style="background: transparent; border: none; color: var(--gold); font-family: 'Montserrat', sans-serif; font-size: 18px; letter-spacing: 1px; padding: 4px 0;">
@@ -988,6 +1156,7 @@ function renderSessions() {
         </div>
         ${isFirst ? '' : `<button class="btn-danger" onclick="removeSession('${s.id}')">세션 삭제</button>`}
       </div>
+      <div class="session-body">
       <table>
         <thead>
           <tr>
@@ -1024,6 +1193,7 @@ function renderSessions() {
           `}
         </tbody>
       </table>
+      </div>
     </div>
   `;
   }).join('');
@@ -1331,8 +1501,14 @@ function importData(event) {
 }
 
 function resetAll() {
-  if (!confirm('정말 모든 데이터를 초기화할까요? 이 동작은 되돌릴 수 없어요.')) return;
-  if (!confirm('마지막 확인이에요. 진짜 초기화할까요? (자동완성 이름 기록도 함께 삭제됩니다)')) return;
+  document.getElementById('reset-modal').classList.add('show');
+}
+
+function closeResetModal() {
+  document.getElementById('reset-modal').classList.remove('show');
+}
+
+function confirmReset() {
   localStorage.removeItem(STORAGE_KEY);
   state = {
     date: new Date().toISOString().split('T')[0],
@@ -1342,6 +1518,7 @@ function resetAll() {
     expenses: []
   };
   save(); render();
+  closeResetModal();
 }
 
 // ========== Init ==========
@@ -1352,6 +1529,11 @@ document.getElementById('game-date').addEventListener('change', e => {
 
 document.getElementById('new-player-name').addEventListener('keypress', e => {
   if (e.key === 'Enter') addPlayer();
+});
+
+// 오버레이 바깥 클릭 시 모달 닫기
+document.getElementById('reset-modal').addEventListener('click', e => {
+  if (e.target.id === 'reset-modal') closeResetModal();
 });
 
 load();
