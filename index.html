@@ -4,29 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>홀덤 정산판</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0a0e0a;
-    --bg-card: #131a14;
-    --bg-elev: #1a2419;
-    --felt: #1d3a2a;
-    --gold: #d4af37;
-    --gold-soft: #b8941f;
-    --red: #c8392c;
-    --green: #4a9d5f;
-    --text: #e8e4d8;
-    --text-dim: #8a8578;
-    --border: #2a332a;
+    --bg: #f4f6fa;
+    --bg-card: #ffffff;
+    --bg-elev: #eef2f9;
+    --felt: #1f6b4a;
+    --gold: #2563c9;
+    --gold-soft: #4f86e0;
+    --red: #d63a4a;
+    --green: #14a06a;
+    --text: #1e2433;
+    --text-dim: #8089a0;
+    --border: #d4dcea;
   }
   body {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Noto Sans KR', sans-serif;
     background: var(--bg);
     background-image:
-      radial-gradient(circle at 20% 10%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 80% 80%, rgba(29, 58, 42, 0.3) 0%, transparent 50%);
+      radial-gradient(circle at 15% 5%, rgba(37, 99, 201, 0.06) 0%, transparent 35%),
+      radial-gradient(circle at 85% 90%, rgba(37, 99, 201, 0.05) 0%, transparent 45%);
     color: var(--text);
     min-height: 100vh;
     padding: 30px 20px 20px;
@@ -54,7 +56,7 @@
   header::before { left: 0; }
   header::after { right: 0; }
   h1 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 42px;
     font-weight: 600;
     letter-spacing: 8px;
@@ -72,26 +74,28 @@
   .section {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 12px;
     padding: 24px;
     margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(43, 43, 40, 0.05), 0 1px 3px rgba(43, 43, 40, 0.04);
   }
   .section-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
+    font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
     color: var(--gold);
     margin-bottom: 18px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    letter-spacing: -0.3px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
   .section-title::before {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     background: var(--gold);
+    border-radius: 2px;
     transform: rotate(45deg);
   }
   
@@ -99,19 +103,20 @@
   .row > * { flex: 1; min-width: 0; }
   
   input, select, button {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Noto Sans KR', sans-serif;
     font-size: 14px;
     padding: 10px 14px;
     background: var(--bg-elev);
     border: 1px solid var(--border);
     color: var(--text);
-    border-radius: 3px;
+    border-radius: 8px;
     transition: all 0.2s;
   }
   input:focus, select:focus {
     outline: none;
     border-color: var(--gold-soft);
-    background: var(--bg);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(184, 137, 58, 0.12);
   }
   input[type="number"] { font-variant-numeric: tabular-nums; }
   
@@ -126,13 +131,13 @@
   
   .btn-gold {
     background: var(--gold);
-    color: var(--bg);
+    color: #ffffff;
     border-color: var(--gold);
     font-weight: 700;
   }
   .btn-gold:hover {
     background: var(--gold-soft);
-    color: var(--bg);
+    color: #ffffff;
     border-color: var(--gold-soft);
   }
   .btn-danger {
@@ -142,8 +147,45 @@
     padding: 6px 10px;
     font-size: 11px;
   }
-  .btn-danger:hover { background: var(--red); color: var(--text); border-color: var(--red); }
+  .btn-danger:hover { background: var(--red); color: #ffffff; border-color: var(--red); }
   .btn-small { padding: 6px 12px; font-size: 11px; flex: 0 0 auto; }
+  
+  /* 바인 금액 스텝퍼 */
+  .buyin-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .step-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    background: var(--gold);
+    border: 1px solid var(--gold);
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  .step-btn:hover {
+    background: var(--gold-soft);
+    color: #ffffff;
+    border-color: var(--gold-soft);
+  }
+  .buyin-display {
+    min-width: 56px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    font-size: 15px;
+  }
   
   /* Player pool */
   .player-pool {
@@ -156,16 +198,18 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
-    background: var(--bg-elev);
+    padding: 7px 14px;
+    background: #ffffff;
     border: 1px solid var(--border);
     border-radius: 20px;
     font-size: 13px;
+    font-weight: 500;
     transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(30, 36, 51, 0.06);
   }
   .player-chip.selected {
     border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(37, 99, 201, 0.08);
     color: var(--gold);
   }
   .player-chip span { cursor: pointer; }
@@ -183,14 +227,16 @@
   .session-card {
     background: var(--bg-elev);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 10px;
     padding: 16px;
     margin-bottom: 14px;
     transition: border-color 0.2s;
   }
+  .session-card.session-even { background: #eef2f9; }
+  .session-card.session-odd { background: #eaf5ee; }
   .session-card.invalid {
     border-color: var(--red);
-    box-shadow: 0 0 0 1px rgba(200, 57, 44, 0.3);
+    box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
   }
   .session-warning {
     color: var(--red);
@@ -208,7 +254,7 @@
     border-bottom: 1px solid var(--border);
   }
   .session-name {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 18px;
     color: var(--gold);
     letter-spacing: 1px;
@@ -244,10 +290,26 @@
   td.profit { color: var(--green); font-weight: 700; }
   td.loss { color: var(--red); font-weight: 700; }
   td.zero { color: var(--text-dim); }
+  td.player-name-cell { font-weight: 700; }
   
   /* Summary */
   .settlement-table th, .settlement-table td { text-align: right; }
   .settlement-table th:first-child, .settlement-table td:first-child { text-align: left; }
+  .settlement-table tbody tr.settle-even td { background: #f4f7fc; }
+  .settlement-table tbody tr.settle-odd td { background: #f1f8f3; }
+  .settlement-table tbody td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+  .settlement-table tbody td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+  
+  /* 최종 정산 한글 단위 보조 표기 */
+  .kor-unit {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dim);
+    opacity: 0.85;
+  }
+  .kor-unit:empty { display: none; }
   
   .settlement-date {
     color: var(--text-dim);
@@ -258,15 +320,60 @@
   }
   .settlement-date:empty { display: none; }
   
-  .expense-row {
-    display: grid;
-    grid-template-columns: 1fr 140px 140px auto;
+  /* 비용 입력 카드 (작성 영역) */
+  .expense-input-card {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
-    margin-bottom: 8px;
+    padding: 14px;
+    margin-top: 12px;
+    background: var(--bg-elev);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
   }
-  .expense-row.no-payer {
-    grid-template-columns: 1fr 140px auto;
+  .expense-input-card .exp-input-name { width: 100%; }
+  .expense-input-card .exp-input-half {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
+  .expense-input-card .exp-input-half > * { width: 100%; min-width: 0; }
+  .expense-input-card .btn-gold { width: 100%; padding: 11px; }
+
+  /* 비용 항목 (등록된 항목) */
+  .expense-item {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .expense-item.exp-even { background: #eef2f9; }
+  .expense-item.exp-odd { background: #eaf5ee; }
+  .exp-item-name {
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .exp-item-half {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .exp-item-half select { width: 100%; min-width: 0; font-size: 12px; padding: 7px 8px; background: #fff; }
+  .exp-item-amount {
+    text-align: right;
+    color: var(--gold);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .exp-item-del { flex: 0 0 auto; }
   
   .expense-total {
     display: flex;
@@ -276,7 +383,7 @@
     padding: 14px 16px;
     background: var(--bg-elev);
     border: 1px solid var(--gold-soft);
-    border-radius: 4px;
+    border-radius: 8px;
   }
   .expense-total-label {
     color: var(--text);
@@ -287,7 +394,7 @@
   }
   .expense-total-value {
     color: var(--gold);
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 24px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -321,12 +428,182 @@
     text-transform: uppercase;
   }
   
-  @media (max-width: 640px) {
-    .section { padding: 16px; }
-    .expense-row { grid-template-columns: 1fr 100px 100px auto; gap: 6px; }
-    .expense-row.no-payer { grid-template-columns: 1fr 120px auto; }
-    th, td { padding: 8px 4px; font-size: 12px; }
-    .expense-total-value { font-size: 20px; }
+  /* ===== 모바일 카드형 레이아웃 (768px 이하) ===== */
+  @media (max-width: 768px) {
+    body { padding: 16px 12px; font-size: 14px; }
+    .section { padding: 16px; margin-bottom: 16px; }
+    .section-title { font-size: 20px; }
+
+    /* 세션 / 정산 테이블을 카드형으로 전환 */
+    .session-card table,
+    .settlement-table {
+      display: block;
+    }
+    .session-card thead,
+    .settlement-table thead {
+      display: none; /* 헤더 숨김 - 각 셀에 data-label로 표시 */
+    }
+    .session-card tbody,
+    .settlement-table tbody {
+      display: block;
+    }
+    .session-card tbody tr,
+    .settlement-table tbody tr {
+      display: block;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(30, 36, 51, 0.05);
+    }
+    .session-card tbody tr:last-child,
+    .settlement-table tbody tr:last-child {
+      margin-bottom: 0;
+    }
+    /* 모바일 정산 카드 교차 배경 (데스크탑 td 배경은 무효화) */
+    .settlement-table tbody tr.settle-even { background: #f4f7fc; }
+    .settlement-table tbody tr.settle-odd { background: #f1f8f3; }
+    .settlement-table tbody tr.settle-even td,
+    .settlement-table tbody tr.settle-odd td { background: transparent; }
+    /* 빈 상태 행은 카드 스타일 제외 */
+    .session-card tbody tr td.empty,
+    .settlement-table tbody tr td.empty {
+      display: block;
+      text-align: center;
+    }
+    .session-card tbody tr:has(td.empty),
+    .settlement-table tbody tr:has(td.empty) {
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    .session-card tbody td,
+    .settlement-table tbody td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: right;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .session-card tbody td:last-child,
+    .settlement-table tbody td:last-child {
+      border-bottom: none;
+    }
+    /* data-label을 좌측 라벨로 표시 */
+    .session-card tbody td::before,
+    .settlement-table tbody td::before {
+      content: attr(data-label);
+      color: var(--text-dim);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: left;
+      margin-right: 12px;
+      white-space: nowrap;
+    }
+    /* 플레이어 이름은 카드 상단 헤더처럼 강조 */
+    .player-name-cell {
+      font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      color: var(--gold) !important;
+      border-bottom: 1px solid var(--gold-soft) !important;
+      padding-bottom: 8px !important;
+      margin-bottom: 4px;
+    }
+    .player-name-cell::before {
+      display: none; /* 플레이어 라벨은 숨김 */
+    }
+    /* 입력칸 모바일 최적화 */
+    .session-card tbody td input {
+      width: 130px;
+      text-align: right;
+      font-size: 15px;
+      padding: 8px 10px;
+    }
+    /* 최종 정산 값 강조 */
+    .final-cell {
+      font-size: 17px !important;
+      font-weight: 700;
+      padding-top: 10px !important;
+      margin-top: 2px;
+      border-top: 1px solid var(--border) !important;
+    }
+
+    /* 비용 입력/항목 - 모바일 폰트 키우기 */
+    .expense-input-card input,
+    .expense-input-card select { font-size: 15px; }
+    .expense-item {
+      grid-template-columns: 1fr auto;
+      gap: 8px 10px;
+    }
+    .exp-item-name { font-size: 16px; grid-column: 1 / -1; }
+    .exp-item-half { grid-column: 1; }
+    .exp-item-del { grid-column: 2; grid-row: 2; align-self: center; }
+    .exp-item-amount { font-size: 15px; }
+    .exp-item-half select { font-size: 13px; }
+
+    /* 세션 헤더 */
+    .session-header { flex-wrap: wrap; gap: 8px; }
+    .session-warning { margin-left: 0; display: block; width: 100%; }
+
+    /* 플레이어 칩 더 크게 */
+    .player-chip { font-size: 14px; padding: 8px 14px; }
+
+    /* 툴바 버튼 풀폭 2열 */
+    .toolbar { gap: 8px; }
+    .toolbar button {
+      flex: 1 1 calc(50% - 4px);
+      padding: 12px 8px;
+      font-size: 12px;
+    }
+
+    .expense-total-value { font-size: 22px; }
+    .stat-value { font-size: 22px; }
+  }
+
+  @media (max-width: 400px) {
+    .session-card tbody td input { width: 110px; }
+    .section-title { font-size: 18px; letter-spacing: 1px; }
+  }
+
+  /* 이미지 캡쳐 시 데스크탑 테이블 레이아웃 강제 (모바일 미디어쿼리 무시) */
+  .force-desktop-capture .settlement-table { display: table !important; }
+  .force-desktop-capture .settlement-table thead { display: table-header-group !important; }
+  .force-desktop-capture .settlement-table tbody { display: table-row-group !important; }
+  .force-desktop-capture .settlement-table tbody tr {
+    display: table-row !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .force-desktop-capture .settlement-table tbody td {
+    display: table-cell !important;
+    text-align: right !important;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-top: none !important;
+  }
+  .force-desktop-capture .settlement-table tbody td:first-child { text-align: left !important; }
+  .force-desktop-capture .settlement-table tbody td::before { display: none !important; }
+  .force-desktop-capture .player-name-cell {
+    font-family: 'Noto Sans KR', sans-serif !important;
+    font-size: 13px !important;
+    color: var(--text) !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 0 !important;
+  }
+  .force-desktop-capture .final-cell {
+    font-size: 13px !important;
+    border-top: none !important;
+    padding-top: 10px !important;
+    margin-top: 0 !important;
   }
 </style>
 </head>
@@ -363,13 +640,15 @@
 <div class="section">
   <div class="section-title">비용</div>
   <div id="expense-list"></div>
-  <div class="expense-row" style="margin-top: 10px;">
-    <input type="text" id="expense-name" placeholder="항목 (예: 대관료, 피자)">
-    <select id="expense-payer">
-      <option value="">결제자 선택</option>
-    </select>
-    <input type="number" id="expense-amount" placeholder="금액" min="0">
-    <button class="btn-gold btn-small" onclick="addExpense()">추가</button>
+  <div class="expense-input-card">
+    <input type="text" id="expense-name" placeholder="항목 (예: 대관료, 피자)" class="exp-input-name">
+    <div class="exp-input-half">
+      <select id="expense-payer">
+        <option value="">결제자 선택</option>
+      </select>
+      <input type="number" id="expense-amount" inputmode="numeric" placeholder="금액" min="0">
+    </div>
+    <button class="btn-gold" onclick="addExpense()">+ 추가</button>
   </div>
   <div class="expense-total" id="expense-total-row">
     <span class="expense-total-label">총 비용</span>
@@ -425,6 +704,14 @@ const STORAGE_KEY = 'holdem-ledger-v1';
 
 function uid() { return Math.random().toString(36).slice(2, 10); }
 function fmt(n) { return '₩' + Math.round(n).toLocaleString('ko-KR'); }
+// 금액을 "만" 단위 한글로 표시 (예: 500000 → "50만", 1230000 → "123만", 0 → "0")
+function fmtKor(n) {
+  const man = n / 10000;
+  if (man === 0) return '0';
+  // 만 단위로 떨어지면 "○만", 아니면 소수점 한 자리까지
+  if (Number.isInteger(man)) return man.toLocaleString('ko-KR') + '만';
+  return (Math.round(man * 10) / 10).toLocaleString('ko-KR') + '만';
+}
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -533,7 +820,84 @@ function updateEntry(sessionId, playerId, field, value) {
   if (!s) return;
   if (!s.entries[playerId]) s.entries[playerId] = { buyin: 0, remain: 0 };
   s.entries[playerId][field] = parseFloat(value) || 0;
-  save(); renderSummary();
+  save();
+  // 입력 포커스 유지를 위해 전체 재렌더 대신 해당 행 손익 + 세션 검증만 갱신
+  updateSessionRowPnl(sessionId, playerId);
+  updateSessionValidation(sessionId);
+  renderSummary();
+}
+
+const BUYIN_STEP = 100000; // 바인 금액 증감 단위 (10만)
+
+// 바인 금액을 10만 단위로 증감
+function stepBuyin(sessionId, playerId, direction) {
+  const s = state.sessions.find(s => s.id === sessionId);
+  if (!s) return;
+  if (!s.entries[playerId]) s.entries[playerId] = { buyin: 0, remain: 0 };
+  let next = (s.entries[playerId].buyin || 0) + direction * BUYIN_STEP;
+  if (next < 0) next = 0;
+  s.entries[playerId].buyin = next;
+  save();
+  // 한글 표시 갱신
+  const card = document.querySelector(`[data-session="${sessionId}"]`);
+  if (card) {
+    const row = card.querySelector(`[data-row="${playerId}"]`);
+    if (row) {
+      const display = row.querySelector('.buyin-display');
+      if (display) display.textContent = fmtKor(next);
+    }
+  }
+  updateSessionRowPnl(sessionId, playerId);
+  updateSessionValidation(sessionId);
+  renderSummary();
+}
+
+// 특정 행의 손익 셀만 갱신 (포커스 유지)
+function updateSessionRowPnl(sessionId, playerId) {
+  const s = state.sessions.find(s => s.id === sessionId);
+  if (!s) return;
+  const entry = s.entries[playerId] || { buyin: 0, remain: 0 };
+  const pnl = entry.remain - entry.buyin;
+  const cls = pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : 'zero';
+  const card = document.querySelector(`[data-session="${sessionId}"]`);
+  if (!card) return;
+  const row = card.querySelector(`[data-row="${playerId}"]`);
+  if (!row) return;
+  const pnlCell = row.querySelector('[data-label="손익"]');
+  if (pnlCell) {
+    pnlCell.className = cls;
+    pnlCell.dataset.label = '손익';
+    const korStr = pnl !== 0 ? (pnl > 0 ? '+' : '−') + fmtKor(Math.abs(pnl)) : '';
+    pnlCell.innerHTML = (pnl > 0 ? '+' : '') + fmt(pnl) + `<span class="kor-unit">${korStr}</span>`;
+  }
+}
+
+// 세션 검증 상태(빨간 테두리/경고)만 갱신
+function updateSessionValidation(sessionId) {
+  const s = state.sessions.find(s => s.id === sessionId);
+  if (!s) return;
+  let totalBuyin = 0, totalRemain = 0;
+  state.participants.forEach(p => {
+    const entry = s.entries[p.id] || { buyin: 0, remain: 0 };
+    totalBuyin += entry.buyin;
+    totalRemain += entry.remain;
+  });
+  const isValid = totalBuyin === totalRemain;
+  const hasAnyValue = totalBuyin > 0 || totalRemain > 0;
+  const showWarning = state.participants.length > 0 && hasAnyValue && !isValid;
+  const card = document.querySelector(`[data-session="${sessionId}"]`);
+  if (!card) return;
+  card.classList.toggle('invalid', showWarning);
+  let warningEl = card.querySelector('.session-warning');
+  const headerLeft = card.querySelector('.session-header > div');
+  if (showWarning && !warningEl && headerLeft) {
+    warningEl = document.createElement('span');
+    warningEl.className = 'session-warning';
+    warningEl.textContent = '* 바인 금액과 남은 금액이 다릅니다.';
+    headerLeft.appendChild(warningEl);
+  } else if (!showWarning && warningEl) {
+    warningEl.remove();
+  }
 }
 
 // ========== Expenses ==========
@@ -614,12 +978,12 @@ function renderSessions() {
     const showWarning = hasParticipants && hasAnyValue && !isValid;
     
     return `
-    <div class="session-card${showWarning ? ' invalid' : ''}">
+    <div class="session-card session-${index % 2 === 0 ? 'even' : 'odd'}${showWarning ? ' invalid' : ''}" data-session="${s.id}">
       <div class="session-header">
         <div style="display: flex; align-items: center; flex: 1; flex-wrap: wrap;">
           <input type="text" value="${escapeHtml(s.name)}" 
                  onchange="renameSession('${s.id}', this.value)"
-                 style="background: transparent; border: none; color: var(--gold); font-family: 'Cormorant Garamond', serif; font-size: 18px; letter-spacing: 1px; padding: 4px 0;">
+                 style="background: transparent; border: none; color: var(--gold); font-family: 'Montserrat', sans-serif; font-size: 18px; letter-spacing: 1px; padding: 4px 0;">
           ${showWarning ? `<span class="session-warning">* 바인 금액과 남은 금액이 다릅니다.</span>` : ''}
         </div>
         ${isFirst ? '' : `<button class="btn-danger" onclick="removeSession('${s.id}')">세션 삭제</button>`}
@@ -631,30 +995,31 @@ function renderSessions() {
             <th>바인 금액</th>
             <th>남은 금액</th>
             <th>손익</th>
-            <th>실제 손익 (50%)</th>
           </tr>
         </thead>
         <tbody>
           ${hasParticipants ? state.participants.map(p => {
             const entry = s.entries[p.id] || { buyin: 0, remain: 0 };
             const pnl = entry.remain - entry.buyin;
-            const actualPnl = pnl * 0.5;
             const cls = pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : 'zero';
-            const actualCls = actualPnl > 0 ? 'profit' : actualPnl < 0 ? 'loss' : 'zero';
             return `
-              <tr>
-                <td>${escapeHtml(p.name)}</td>
-                <td><input type="number" value="${entry.buyin}" min="0" step="1000"
-                     onchange="updateEntry('${s.id}', '${p.id}', 'buyin', this.value)"></td>
-                <td><input type="number" value="${entry.remain}" min="0" step="1000"
+              <tr data-row="${p.id}">
+                <td data-label="플레이어" class="player-name-cell">${escapeHtml(p.name)}</td>
+                <td data-label="바인 금액">
+                  <div class="buyin-stepper">
+                    <button class="step-btn" onclick="stepBuyin('${s.id}', '${p.id}', -1)">−</button>
+                    <span class="buyin-display">${fmtKor(entry.buyin)}</span>
+                    <button class="step-btn" onclick="stepBuyin('${s.id}', '${p.id}', 1)">+</button>
+                  </div>
+                </td>
+                <td data-label="남은 금액"><input type="number" inputmode="numeric" value="${entry.remain}" min="0" step="10000"
                      onchange="updateEntry('${s.id}', '${p.id}', 'remain', this.value)"></td>
-                <td class="${cls}">${pnl > 0 ? '+' : ''}${fmt(pnl)}</td>
-                <td class="${actualCls}">${actualPnl > 0 ? '+' : ''}${fmt(actualPnl)}</td>
+                <td data-label="손익" class="${cls}">${pnl > 0 ? '+' : ''}${fmt(pnl)}<span class="kor-unit">${pnl !== 0 ? (pnl > 0 ? '+' : '−') + fmtKor(Math.abs(pnl)) : ''}</span></td>
               </tr>
             `;
           }).join('') : `
             <tr>
-              <td colspan="5" class="empty" style="padding: 16px;">참가자를 추가하면 입력란이 표시돼요</td>
+              <td colspan="4" class="empty" style="padding: 16px;">참가자를 추가하면 입력란이 표시돼요</td>
             </tr>
           `}
         </tbody>
@@ -678,18 +1043,20 @@ function renderExpenses() {
   if (state.expenses.length === 0) {
     el.innerHTML = '<div class="empty" style="padding: 10px;">아직 항목이 없어요</div>';
   } else {
-    el.innerHTML = state.expenses.map(e => {
+    el.innerHTML = state.expenses.map((e, idx) => {
       // 각 비용 항목의 결제자 드롭다운
       const payerOptions = '<option value="">결제자 없음</option>' +
         state.participants.map(p => 
           `<option value="${p.id}" ${e.payerId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
         ).join('');
       return `
-        <div class="expense-row" style="margin-bottom: 6px;">
-          <div style="display: flex; align-items: center; padding: 0 4px;">${escapeHtml(e.name)}</div>
-          <select onchange="updateExpensePayer('${e.id}', this.value)" style="font-size: 12px;">${payerOptions}</select>
-          <div style="text-align: right; padding: 8px; color: var(--gold); font-variant-numeric: tabular-nums;">${fmt(e.amount)}</div>
-          <button class="btn-danger" onclick="removeExpense('${e.id}')">×</button>
+        <div class="expense-item ${idx % 2 === 0 ? 'exp-even' : 'exp-odd'}">
+          <div class="exp-item-name">${escapeHtml(e.name)}</div>
+          <div class="exp-item-half">
+            <select onchange="updateExpensePayer('${e.id}', this.value)">${payerOptions}</select>
+            <span class="exp-item-amount">${fmt(e.amount)}</span>
+          </div>
+          <button class="btn-danger exp-item-del" onclick="removeExpense('${e.id}')">삭제</button>
         </div>
       `;
     }).join('');
@@ -748,7 +1115,7 @@ function renderSummary() {
   if (state.participants.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty">참가자가 없어요</td></tr>';
   } else {
-    tbody.innerHTML = state.participants.map(p => {
+    tbody.innerHTML = state.participants.map((p, idx) => {
       const s = playerStats[p.id];
       const share = expenseShare[p.id];
       const refund = paymentRefund[p.id];
@@ -756,14 +1123,14 @@ function renderSummary() {
       const cls = final > 0 ? 'profit' : final < 0 ? 'loss' : 'zero';
       const pnlCls = s.actualPnl > 0 ? 'profit' : s.actualPnl < 0 ? 'loss' : 'zero';
       return `
-        <tr>
-          <td>${escapeHtml(p.name)}</td>
-          <td>${fmt(s.buyin)}</td>
-          <td>${fmt(s.remain)}</td>
-          <td class="${pnlCls}">${s.actualPnl > 0 ? '+' : ''}${fmt(s.actualPnl)}</td>
-          <td>${share > 0 ? '−' + fmt(share) : '—'}</td>
-          <td>${refund > 0 ? '+' + fmt(refund) : '—'}</td>
-          <td class="${cls}">${final > 0 ? '+' : ''}${fmt(final)}</td>
+        <tr class="${idx % 2 === 0 ? 'settle-even' : 'settle-odd'}">
+          <td data-label="플레이어" class="player-name-cell">${escapeHtml(p.name)}</td>
+          <td data-label="바인 합계">${fmt(s.buyin)}</td>
+          <td data-label="남은 금액">${fmt(s.remain)}</td>
+          <td data-label="실제 손익" class="${pnlCls}">${s.actualPnl > 0 ? '+' : ''}${fmt(s.actualPnl)}</td>
+          <td data-label="비용 부담">${share > 0 ? '−' + fmt(share) : '—'}</td>
+          <td data-label="결제 환급">${refund > 0 ? '+' + fmt(refund) : '—'}</td>
+          <td data-label="최종 정산" class="final-cell ${cls}">${final > 0 ? '+' : ''}${fmt(final)}<span class="kor-unit">${final !== 0 ? (final > 0 ? '+' : '−') + fmtKor(Math.abs(final)) : ''}</span></td>
         </tr>
       `;
     }).join('');
@@ -847,6 +1214,7 @@ async function shareImage() {
   section.style.top = '0';
   section.style.zIndex = '-1';
   document.body.style.overflow = 'hidden';
+  document.body.classList.add('force-desktop-capture');
   
   try {
     // DOM 렌더링 반영 대기
@@ -854,7 +1222,7 @@ async function shareImage() {
     
     // 1. 정산 섹션을 캔버스로 캡쳐 (데스크탑 너비)
     const canvas = await html2canvas(section, {
-      backgroundColor: '#0a0e0a',
+      backgroundColor: '#ffffff',
       scale: 2,
       width: DESKTOP_WIDTH,
       windowWidth: DESKTOP_WIDTH,
@@ -865,6 +1233,7 @@ async function shareImage() {
     // 원래 스타일 복원
     section.style.cssText = originalCssText;
     document.body.style.overflow = originalBodyOverflow;
+    document.body.classList.remove('force-desktop-capture');
     
     // 2. Blob 생성
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -903,6 +1272,7 @@ async function shareImage() {
     // 에러 발생 시에도 스타일 복원
     section.style.cssText = originalCssText;
     document.body.style.overflow = originalBodyOverflow;
+    document.body.classList.remove('force-desktop-capture');
     alert('이미지 생성 실패: ' + err.message);
   } finally {
     btn.textContent = originalText;
