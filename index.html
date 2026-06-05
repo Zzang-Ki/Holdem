@@ -19,6 +19,8 @@
     --gold-soft: #4f86e0;
     --red: #d63a4a;
     --green: #14a06a;
+    --share: #16c75a;
+    --share-dark: #11a84a;
     --text: #1e2433;
     --text-dim: #8089a0;
     --border: #d4dcea;
@@ -154,18 +156,18 @@
   .buyin-stepper {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     justify-content: flex-end;
   }
   .step-btn {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     padding: 0;
-    border-radius: 8px;
+    border-radius: 9px;
     background: var(--gold);
     border: 1px solid var(--gold);
     color: #ffffff;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     line-height: 1;
     display: flex;
@@ -179,12 +181,30 @@
     border-color: var(--gold-soft);
   }
   .buyin-display {
-    min-width: 56px;
+    min-width: 70px;
     text-align: center;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--text);
-    font-size: 15px;
+    font-size: 18px;
+  }
+  /* 남은 금액 만단위 입력 (입력칸 + '만' 접미사) */
+  .remain-input-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+    width: 100%;
+  }
+  .remain-input-wrap input {
+    width: 90px;
+    text-align: right;
+  }
+  .unit-suffix {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    flex: 0 0 auto;
   }
   
   /* Player pool */
@@ -274,13 +294,69 @@
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 3px solid var(--gold-soft);
   }
   .session-name {
     font-family: 'Montserrat', sans-serif;
     font-size: 18px;
     color: var(--gold);
     letter-spacing: 1px;
+  }
+  /* 세션 이름 (수정 불가 라벨) */
+  .session-name-label {
+    color: var(--gold);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    padding: 4px 0;
+  }
+  /* 세션 표 셀 폰트 (44px 버튼에 맞춰 확대) */
+  .session-card tbody td { font-size: 15px; }
+  /* 세션 헤더행: 타이틀(18px)보다 4px 작은 14px + 볼드 + 아래 두줄 구분선 */
+  .session-card thead th {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 12px 8px;
+    border-bottom: 4px double var(--gold);
+  }
+  /* 세션 삭제 버튼 - 빨강 배경/흰 글자 (GNB 전체 초기화와 동일) */
+  .btn-delete-session {
+    background: var(--red);
+    color: #ffffff;
+    border-color: var(--red);
+  }
+  .btn-delete-session:hover {
+    background: #b92f3e;
+    color: #ffffff;
+    border-color: #b92f3e;
+  }
+  /* 세션 헤더 우측 액션 버튼 묶음 */
+  .session-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+  .btn-share-session {
+    background: var(--share);
+    color: #ffffff;
+    border-color: var(--share);
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-share-session:hover {
+    background: var(--share-dark);
+    color: #ffffff;
+    border-color: var(--share-dark);
+  }
+  .btn-share-session:disabled {
+    opacity: 0.6;
+    cursor: default;
   }
   
   table {
@@ -306,9 +382,9 @@
   td input {
     width: 100%;
     text-align: right;
-    padding: 6px 8px;
+    padding: 11px 10px;
     background: var(--bg);
-    font-size: 13px;
+    font-size: 15px;
   }
   td.profit { color: var(--green); font-weight: 700; }
   td.loss { color: var(--red); font-weight: 700; }
@@ -318,6 +394,7 @@
   /* Summary */
   .settlement-table th, .settlement-table td { text-align: right; }
   .settlement-table th:first-child, .settlement-table td:first-child { text-align: left; }
+  .settlement-table thead th { font-size: 16px; font-weight: 700; border-bottom: 4px double var(--gold); }
   .settlement-table tbody tr.settle-even td { background: #f4f7fc; }
   .settlement-table tbody tr.settle-odd td { background: #f1f8f3; }
   .settlement-table tbody td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
@@ -410,15 +487,15 @@
   }
   .expense-total-label {
     color: var(--text);
-    font-size: 12px;
-    letter-spacing: 3px;
+    font-size: 20px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    font-weight: 500;
+    font-weight: 700;
   }
   .expense-total-value {
     color: var(--gold);
     font-family: 'Montserrat', sans-serif;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
@@ -472,6 +549,15 @@
     background: #b92f3e;
     color: #ffffff;
     border-color: #b92f3e;
+  }
+  /* 하단 '공유하기' 버튼만 초록 (전체 초기화는 빨강 유지) */
+  .btn-action-share {
+    background: var(--share);
+    border-color: var(--share);
+  }
+  .btn-action-share:hover {
+    background: var(--share-dark);
+    border-color: var(--share-dark);
   }
   /* 고정 푸터에 본문이 가리지 않도록 여백 확보 */
   .footer-spacer { height: 130px; }
@@ -652,10 +738,10 @@
     }
     /* 입력칸 모바일 최적화 */
     .session-card tbody td input {
-      width: 130px;
+      width: 140px;
       text-align: right;
-      font-size: 15px;
-      padding: 8px 10px;
+      font-size: 16px;
+      padding: 12px 12px;
     }
     /* 최종 정산 값 강조 */
     .final-cell {
@@ -691,13 +777,75 @@
     .toolbar-row button { padding: 12px 8px; font-size: 12px; }
     .footer-spacer { height: 120px; }
 
-    .expense-total-value { font-size: 22px; }
+    .expense-total-value { font-size: 20px; }
     .stat-value { font-size: 22px; }
   }
 
   @media (max-width: 400px) {
-    .session-card tbody td input { width: 110px; }
+    .session-card tbody td input { width: 120px; }
     .section-title { font-size: 18px; letter-spacing: 1px; }
+  }
+
+  /* 모바일에서도 세션은 '가로 행(한 명 = 한 줄)' 표로 유지 (정산 표는 카드형 그대로) */
+  @media (max-width: 768px) {
+    .session-card .session-body {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .session-card table { display: table; min-width: 100%; }
+    .session-card thead { display: table-header-group; }
+    .session-card thead th {
+      font-size: 14px;
+      padding: 10px 5px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .session-card tbody { display: table-row-group; }
+    .session-card tbody tr {
+      display: table-row;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin: 0;
+      box-shadow: none;
+    }
+    .session-card tbody td {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: right;
+      padding: 10px 5px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .session-card tbody td:first-child { text-align: left; }
+    .session-card tbody td::before { display: none; } /* data-label 숨김 */
+    .session-card .player-name-cell {
+      font-family: 'Noto Sans KR', sans-serif !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      color: var(--text) !important;
+      border-bottom: 1px solid var(--border) !important;
+      padding-bottom: 10px !important;
+      margin-bottom: 0 !important;
+    }
+    /* 바인 컬럼 컴팩트 (44px 버튼은 유지) */
+    .session-card .buyin-stepper { gap: 6px; }
+    .session-card .buyin-display { min-width: 46px; font-size: 16px; }
+    /* 남은금액(만단위) 입력칸 표 안 적정 폭 */
+    .session-card .remain-input-wrap input {
+      width: 60px;
+      font-size: 15px;
+      padding: 9px 6px;
+    }
+    .session-card .remain-input-wrap { gap: 4px; }
+    .session-card .unit-suffix { font-size: 12px; }
+    /* 손익 한글 보조표기는 줄바꿈 방지 위해 숨김 (가로 폭 절약) */
+    .session-card tbody td .kor-unit { display: none; }
+    /* 빈 상태 행 */
+    .session-card tbody tr:has(td.empty) { background: transparent; }
+    .session-card tbody td.empty { display: table-cell; text-align: center; white-space: normal; }
   }
 
   /* 이미지 캡쳐 시 데스크탑 테이블 레이아웃 강제 (모바일 미디어쿼리 무시) */
@@ -734,6 +882,52 @@
     padding-top: 10px !important;
     margin-top: 0 !important;
   }
+
+  /* === 세션 캡쳐 시 데스크탑 테이블 레이아웃 강제 (모바일 미디어쿼리 무시) === */
+  .force-desktop-capture .session-card table { display: table !important; }
+  .force-desktop-capture .session-card thead { display: table-header-group !important; }
+  .force-desktop-capture .session-card tbody { display: table-row-group !important; }
+  .force-desktop-capture .session-card tbody tr {
+    display: table-row !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+  .force-desktop-capture .session-card tbody td {
+    display: table-cell !important;
+    text-align: right !important;
+    padding: 10px 8px !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-top: none !important;
+  }
+  .force-desktop-capture .session-card tbody td:first-child { text-align: left !important; }
+  .force-desktop-capture .session-card tbody td::before { display: none !important; }
+  .force-desktop-capture .session-card .player-name-cell {
+    font-family: 'Noto Sans KR', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--text) !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* === 세션 이미지 캡쳐 중: 버튼류 숨기고 입력칸을 깔끔한 텍스트로 === */
+  .session-capturing .collapse-toggle,
+  .session-capturing .session-header-actions,
+  .session-capturing .step-btn,
+  .session-capturing .session-warning { display: none !important; }
+  .session-capturing .session-header > div:first-child { gap: 0 !important; }
+  .session-capturing td input {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-align: right !important;
+    padding: 6px 0 !important;
+  }
+  .session-capturing .buyin-stepper { gap: 0 !important; }
 </style>
 </head>
 <body>
@@ -817,9 +1011,9 @@
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
     </div>
     <div class="toolbar-row">
-      <button class="btn-action" onclick="shareImage()">
+      <button class="btn-action btn-action-share" onclick="shareImage()">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        공유하기
+        최종 정산 공유
       </button>
       <button class="btn-action" onclick="resetAll()">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
@@ -993,6 +1187,18 @@ function updateEntry(sessionId, playerId, field, value) {
   renderSummary();
 }
 
+// 남은 금액을 '만' 단위 입력으로 받아 내부에는 원 단위로 저장 (예: 50 → 500000)
+function updateRemainMan(sessionId, playerId, value) {
+  const s = state.sessions.find(s => s.id === sessionId);
+  if (!s) return;
+  if (!s.entries[playerId]) s.entries[playerId] = { buyin: 0, remain: 0 };
+  s.entries[playerId].remain = (parseFloat(value) || 0) * 10000;
+  save();
+  updateSessionRowPnl(sessionId, playerId);
+  updateSessionValidation(sessionId);
+  renderSummary();
+}
+
 const BUYIN_STEP = 100000; // 바인 금액 증감 단위 (10만)
 
 // 바인 금액을 10만 단위로 증감
@@ -1033,8 +1239,7 @@ function updateSessionRowPnl(sessionId, playerId) {
   if (pnlCell) {
     pnlCell.className = cls;
     pnlCell.dataset.label = '손익';
-    const korStr = pnl !== 0 ? (pnl > 0 ? '+' : '−') + fmtKor(Math.abs(pnl)) : '';
-    pnlCell.innerHTML = (pnl > 0 ? '+' : '') + fmt(pnl) + `<span class="kor-unit">${korStr}</span>`;
+    pnlCell.textContent = (pnl > 0 ? '+' : pnl < 0 ? '−' : '') + (pnl !== 0 ? fmtKor(Math.abs(pnl)) : '0');
   }
 }
 
@@ -1149,12 +1354,16 @@ function renderSessions() {
       <div class="session-header">
         <div style="display: flex; align-items: center; flex: 1; flex-wrap: wrap; gap: 4px;">
           <button class="collapse-toggle" onclick="toggleSession('${s.id}')" title="${collapsed ? '펼치기' : '접기'}">${collapsed ? '▶' : '▼'}</button>
-          <input type="text" value="${escapeHtml(s.name)}" 
-                 onchange="renameSession('${s.id}', this.value)"
-                 style="background: transparent; border: none; color: var(--gold); font-family: 'Montserrat', sans-serif; font-size: 18px; letter-spacing: 1px; padding: 4px 0;">
+          <span class="session-name-label">${escapeHtml(s.name)}</span>
           ${showWarning ? `<span class="session-warning">* 바인 금액과 남은 금액이 다릅니다.</span>` : ''}
         </div>
-        ${isFirst ? '' : `<button class="btn-danger" onclick="removeSession('${s.id}')">세션 삭제</button>`}
+        <div class="session-header-actions">
+          <button class="btn-share-session session-share-btn" onclick="shareSession('${s.id}')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            공유
+          </button>
+          ${isFirst ? '' : `<button class="btn-danger btn-delete-session" onclick="removeSession('${s.id}')">세션 삭제</button>`}
+        </div>
       </div>
       <div class="session-body">
       <table>
@@ -1181,9 +1390,14 @@ function renderSessions() {
                     <button class="step-btn" onclick="stepBuyin('${s.id}', '${p.id}', 1)">+</button>
                   </div>
                 </td>
-                <td data-label="남은 금액"><input type="number" inputmode="numeric" value="${entry.remain}" min="0" step="10000"
-                     onchange="updateEntry('${s.id}', '${p.id}', 'remain', this.value)"></td>
-                <td data-label="손익" class="${cls}">${pnl > 0 ? '+' : ''}${fmt(pnl)}<span class="kor-unit">${pnl !== 0 ? (pnl > 0 ? '+' : '−') + fmtKor(Math.abs(pnl)) : ''}</span></td>
+                <td data-label="남은 금액">
+                  <div class="remain-input-wrap">
+                    <input type="number" inputmode="numeric" value="${entry.remain / 10000}" min="0" step="1"
+                       onchange="updateRemainMan('${s.id}', '${p.id}', this.value)">
+                    <span class="unit-suffix">만</span>
+                  </div>
+                </td>
+                <td data-label="손익" class="${cls}">${pnl > 0 ? '+' : pnl < 0 ? '−' : ''}${pnl !== 0 ? fmtKor(Math.abs(pnl)) : '0'}</td>
               </tr>
             `;
           }).join('') : `
@@ -1358,7 +1572,115 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ========== Image Share ==========
+// ========== 공통 캡쳐 → 공유/다운로드 헬퍼 ==========
+async function captureAndShare(element, filename, shareTitle, shareText) {
+  const blob = await new Promise(resolve =>
+    element.__pendingCanvas.toBlob(resolve, 'image/png')
+  );
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  // Web Share API 시도 (모바일에서 OS 공유 시트 → 카톡 선택 가능)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: shareTitle, text: shareText });
+      return 'shared';
+    } catch (err) {
+      if (err.name === 'AbortError') return 'aborted';
+      console.warn('Share API 실패, 다운로드로 전환:', err);
+    }
+  }
+
+  // Fallback: 다운로드
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  return navigator.canShare ? 'downloaded' : 'downloaded-notice';
+}
+
+// ========== 세션별 이미지 공유 ==========
+async function shareSession(sessionId) {
+  const session = state.sessions.find(s => s.id === sessionId);
+  if (!session) return;
+  if (state.participants.length === 0) {
+    alert('참가자가 없어요. 공유할 내용이 없습니다.');
+    return;
+  }
+
+  const card = document.querySelector(`[data-session="${sessionId}"]`);
+  if (!card) return;
+  const btn = card.querySelector('.session-share-btn');
+  const originalBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
+
+  // 접혀있으면 임시로 펼치기
+  const wasCollapsed = card.classList.contains('collapsed');
+  if (wasCollapsed) card.classList.remove('collapsed');
+
+  const DESKTOP_WIDTH = 1060;
+  const originalCssText = card.style.cssText;
+  const originalBodyOverflow = document.body.style.overflow;
+
+  // 캡쳐용 임시 스타일 (화면 밖에서 데스크탑 너비로 렌더)
+  card.style.width = DESKTOP_WIDTH + 'px';
+  card.style.maxWidth = 'none';
+  card.style.position = 'fixed';
+  card.style.left = '-9999px';
+  card.style.top = '0';
+  card.style.zIndex = '-1';
+  document.body.style.overflow = 'hidden';
+  document.body.classList.add('force-desktop-capture');
+  card.classList.add('session-capturing');
+
+  const restore = () => {
+    card.style.cssText = originalCssText;
+    document.body.style.overflow = originalBodyOverflow;
+    document.body.classList.remove('force-desktop-capture');
+    card.classList.remove('session-capturing');
+    if (wasCollapsed) card.classList.add('collapsed');
+  };
+
+  try {
+    await new Promise(r => setTimeout(r, 50));
+
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      width: DESKTOP_WIDTH,
+      windowWidth: DESKTOP_WIDTH,
+      logging: false,
+      useCORS: true
+    });
+
+    restore();
+
+    card.__pendingCanvas = canvas;
+    const safeName = (session.name || '세션').replace(/[\\/:*?"<>|]/g, '_');
+    const filename = `홀덤_${state.date || 'untitled'}_${safeName}.png`;
+    const result = await captureAndShare(
+      card,
+      filename,
+      `홀덤 정산 - ${session.name}`,
+      `홀덤 정산 결과 · ${session.name} (${state.date || ''})`
+    );
+    delete card.__pendingCanvas;
+
+    if (result === 'downloaded-notice') {
+      setTimeout(() => {
+        alert('이미지가 다운로드 되었어요!\n카톡 채팅창에 끌어다 놓으시면 공유 가능합니다.');
+      }, 300);
+    }
+  } catch (err) {
+    restore();
+    alert('이미지 생성 실패: ' + err.message);
+  } finally {
+    if (btn) { btn.innerHTML = originalBtnHtml; btn.disabled = false; }
+  }
+}
+
+// ========== Image Share (최종 정산 전체) ==========
 async function shareImage() {
   if (state.participants.length === 0) {
     alert('참가자가 없어요. 정산할 내용이 없습니다.');
