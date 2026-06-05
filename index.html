@@ -1627,25 +1627,28 @@ async function shareSession(sessionId) {
   const wasCollapsed = card.classList.contains('collapsed');
   if (wasCollapsed) card.classList.remove('collapsed');
 
-  const DESKTOP_WIDTH = 1060;
+  // 데스크탑 폭 강제 없이, 폰 화면 그대로의 콤팩트한 폭으로 캡쳐
+  const CAPTURE_WIDTH = 390;
   const originalCssText = card.style.cssText;
   const originalBodyOverflow = document.body.style.overflow;
+  const bodyEl = card.querySelector('.session-body');
+  const prevBodyOverflowX = bodyEl ? bodyEl.style.overflowX : '';
 
-  // 캡쳐용 임시 스타일 (화면 밖에서 데스크탑 너비로 렌더)
-  card.style.width = DESKTOP_WIDTH + 'px';
+  // 화면 밖에서 렌더 (force-desktop-capture 미적용 → 모바일 레이아웃 유지)
+  card.style.width = CAPTURE_WIDTH + 'px';
   card.style.maxWidth = 'none';
   card.style.position = 'fixed';
   card.style.left = '-9999px';
   card.style.top = '0';
   card.style.zIndex = '-1';
   document.body.style.overflow = 'hidden';
-  document.body.classList.add('force-desktop-capture');
+  if (bodyEl) bodyEl.style.overflowX = 'visible'; // 표가 잘리지 않도록
   card.classList.add('session-capturing');
 
   const restore = () => {
     card.style.cssText = originalCssText;
     document.body.style.overflow = originalBodyOverflow;
-    document.body.classList.remove('force-desktop-capture');
+    if (bodyEl) bodyEl.style.overflowX = prevBodyOverflowX;
     card.classList.remove('session-capturing');
     if (wasCollapsed) card.classList.add('collapsed');
   };
@@ -1653,11 +1656,15 @@ async function shareSession(sessionId) {
   try {
     await new Promise(r => setTimeout(r, 50));
 
+    // 내용이 더 넓으면 그만큼만 확장 (가로로 길어지지 않게)
+    const w = Math.max(CAPTURE_WIDTH, card.scrollWidth);
+    card.style.width = w + 'px';
+
     const canvas = await html2canvas(card, {
       backgroundColor: '#ffffff',
       scale: 2,
-      width: DESKTOP_WIDTH,
-      windowWidth: DESKTOP_WIDTH,
+      width: w,
+      windowWidth: CAPTURE_WIDTH,
       logging: false,
       useCORS: true
     });
