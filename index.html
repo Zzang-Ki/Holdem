@@ -969,7 +969,7 @@
       <select id="expense-payer">
         <option value="">결제자 선택</option>
       </select>
-      <input type="number" id="expense-amount" inputmode="numeric" placeholder="금액" min="0">
+      <input type="text" id="expense-amount" inputmode="numeric" placeholder="금액" oninput="formatThousands(this)">
     </div>
     <button class="btn-gold" onclick="addExpense()">+ 추가</button>
   </div>
@@ -1272,9 +1272,16 @@ function updateSessionValidation(sessionId) {
 }
 
 // ========== Expenses ==========
+// 입력 중 1,000 단위 콤마 자동 표기
+function formatThousands(input) {
+  const digits = input.value.replace(/[^\d]/g, '');
+  input.value = digits === '' ? '' : parseInt(digits, 10).toLocaleString('ko-KR');
+}
+
 function addExpense() {
   const name = document.getElementById('expense-name').value.trim();
-  const amount = parseFloat(document.getElementById('expense-amount').value) || 0;
+  const amountRaw = document.getElementById('expense-amount').value.replace(/[^\d]/g, '');
+  const amount = parseFloat(amountRaw) || 0;
   const payerId = document.getElementById('expense-payer').value || null;
   if (!name || amount <= 0) {
     alert('항목 이름과 금액을 모두 입력해주세요');
@@ -1380,6 +1387,7 @@ function renderSessions() {
             const entry = s.entries[p.id] || { buyin: 0, remain: 0 };
             const pnl = entry.remain - entry.buyin;
             const cls = pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : 'zero';
+            const remainManVal = entry.remain ? entry.remain / 10000 : '';
             return `
               <tr data-row="${p.id}">
                 <td data-label="플레이어" class="player-name-cell">${escapeHtml(p.name)}</td>
@@ -1392,7 +1400,7 @@ function renderSessions() {
                 </td>
                 <td data-label="남은 금액">
                   <div class="remain-input-wrap">
-                    <input type="number" inputmode="numeric" value="${entry.remain / 10000}" min="0" step="1"
+                    <input type="number" inputmode="numeric" value="${remainManVal}" placeholder="0" min="0" step="1"
                        onchange="updateRemainMan('${s.id}', '${p.id}', this.value)">
                     <span class="unit-suffix">만</span>
                   </div>
