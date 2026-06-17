@@ -265,6 +265,13 @@
     font-weight: 500;
     letter-spacing: 0.5px;
   }
+  .session-ok {
+    color: var(--green);
+    font-size: 11px;
+    margin-left: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
   /* 세션 접기/펼치기 */
   .collapse-toggle {
     width: 26px;
@@ -767,7 +774,7 @@
 
     /* 세션 헤더 */
     .session-header { flex-wrap: wrap; gap: 8px; }
-    .session-warning { margin-left: 0; display: block; width: 100%; }
+    .session-warning, .session-ok { margin-left: 0; display: block; width: 100%; }
 
     /* 플레이어 칩 더 크게 */
     .player-chip { font-size: 14px; padding: 8px 14px; }
@@ -1064,6 +1071,12 @@ function fmtKor(n) {
   if (Number.isInteger(man)) return man.toLocaleString('ko-KR') + '만';
   return (Math.round(man * 10) / 10).toLocaleString('ko-KR') + '만';
 }
+// 세션 바인/남은 금액 불일치 경고 문구 (차이 금액 + 방향 포함)
+function sessionDiffText(totalBuyin, totalRemain) {
+  const diff = totalRemain - totalBuyin; // 남은 - 바인
+  const dir = diff > 0 ? '남은 금액이 많음' : '남은 금액이 부족';
+  return `* 바인과 남은 금액이 ${fmtKor(Math.abs(diff))} 차이나요 (${dir})`;
+}
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1256,18 +1269,34 @@ function updateSessionValidation(sessionId) {
   const isValid = totalBuyin === totalRemain;
   const hasAnyValue = totalBuyin > 0 || totalRemain > 0;
   const showWarning = state.participants.length > 0 && hasAnyValue && !isValid;
+  const showOk = state.participants.length > 0 && hasAnyValue && isValid;
   const card = document.querySelector(`[data-session="${sessionId}"]`);
   if (!card) return;
   card.classList.toggle('invalid', showWarning);
-  let warningEl = card.querySelector('.session-warning');
   const headerLeft = card.querySelector('.session-header > div');
-  if (showWarning && !warningEl && headerLeft) {
-    warningEl = document.createElement('span');
-    warningEl.className = 'session-warning';
-    warningEl.textContent = '* 바인 금액과 남은 금액이 다릅니다.';
-    headerLeft.appendChild(warningEl);
-  } else if (!showWarning && warningEl) {
+  let warningEl = card.querySelector('.session-warning');
+  let okEl = card.querySelector('.session-ok');
+  // 불일치 경고
+  if (showWarning) {
+    if (!warningEl && headerLeft) {
+      warningEl = document.createElement('span');
+      warningEl.className = 'session-warning';
+      headerLeft.appendChild(warningEl);
+    }
+    if (warningEl) warningEl.textContent = sessionDiffText(totalBuyin, totalRemain);
+  } else if (warningEl) {
     warningEl.remove();
+  }
+  // 정산 일치 배지
+  if (showOk) {
+    if (!okEl && headerLeft) {
+      okEl = document.createElement('span');
+      okEl.className = 'session-ok';
+      okEl.textContent = '✓ 정산 일치';
+      headerLeft.appendChild(okEl);
+    }
+  } else if (okEl) {
+    okEl.remove();
   }
 }
 
@@ -1354,6 +1383,7 @@ function renderSessions() {
     const isValid = totalBuyin === totalRemain;
     const hasAnyValue = totalBuyin > 0 || totalRemain > 0;
     const showWarning = hasParticipants && hasAnyValue && !isValid;
+    const showOk = hasParticipants && hasAnyValue && isValid;
     const collapsed = !!s.collapsed;
     
     return `
@@ -1362,7 +1392,8 @@ function renderSessions() {
         <div style="display: flex; align-items: center; flex: 1; flex-wrap: wrap; gap: 4px;">
           <button class="collapse-toggle" onclick="toggleSession('${s.id}')" title="${collapsed ? '펼치기' : '접기'}">${collapsed ? '▶' : '▼'}</button>
           <span class="session-name-label">${escapeHtml(s.name)}</span>
-          ${showWarning ? `<span class="session-warning">* 바인 금액과 남은 금액이 다릅니다.</span>` : ''}
+          ${showWarning ? `<span class="session-warning">${sessionDiffText(totalBuyin, totalRemain)}</span>` : ''}
+          ${showOk ? `<span class="session-ok">✓ 정산 일치</span>` : ''}
         </div>
         <div class="session-header-actions">
           <button class="btn-share-session session-share-btn" onclick="shareSession('${s.id}')">
@@ -1479,7 +1510,7 @@ function renderSummary() {
   
   const totalExpense = state.expenses.reduce((s, e) => s + e.amount, 0);
   
-  // 결제자별 환급액 계산
+  // 결제자별 환급액 (실제 결제한 금액 — 정확히 보장)
   const paymentRefund = {};
   state.participants.forEach(p => { paymentRefund[p.id] = 0; });
   state.expenses.forEach(e => {
@@ -1487,19 +1518,50 @@ function renderSummary() {
       paymentRefund[e.payerId] += e.amount;
     }
   });
+  // 환급 대상 총액 (결제자가 지정된 비용만) / 미지정 비용
+  const totalRefund = Object.values(paymentRefund).reduce((s, v) => s + v, 0);
+  const unpaidExpense = totalExpense - totalRefund;
   
   // 흑자 플레이어 풀 (실제 손익 기준)
   const profitPlayers = state.participants.filter(p => playerStats[p.id].actualPnl > 0);
   const totalProfit = profitPlayers.reduce((s, p) => s + playerStats[p.id].actualPnl, 0);
   
-  // 비용 분담 (실제 손익 비율, 1000원 단위 반올림)
+  // ===== 비용 분담 (합계 정합성 + 결제자 우선) =====
+  // 1) 흑자 플레이어들이 "결제자에게 돌려줄 총액(totalRefund)"을 흑자 비율대로 1000원 단위 부담
+  // 2) 반올림으로 모자라면 올림 처리(흑자 큰 사람부터 1000원씩 추가)하여 결제자가 손해 안 보게 함
+  // 3) 올림으로 더 걷힌 잔액(surplus)은 가장 많이 낸 결제자에게 환급 → 합계 정확히 0
   const expenseShare = {};
   state.participants.forEach(p => { expenseShare[p.id] = 0; });
-  if (totalProfit > 0) {
+  let collected = 0;
+  let surplus = 0;
+  if (totalProfit > 0 && totalRefund > 0) {
+    // 1) 비율대로 1000원 단위 반올림
     profitPlayers.forEach(p => {
-      const raw = totalExpense * (playerStats[p.id].actualPnl / totalProfit);
+      const raw = totalRefund * (playerStats[p.id].actualPnl / totalProfit);
       expenseShare[p.id] = Math.round(raw / 1000) * 1000;
     });
+    collected = profitPlayers.reduce((sum, p) => sum + expenseShare[p.id], 0);
+    // 2) 모자라면 올림: 흑자 비율 큰 사람부터 1000원씩 추가
+    const ordered = [...profitPlayers].sort((a, b) =>
+      playerStats[b.id].actualPnl - playerStats[a.id].actualPnl
+    );
+    let i = 0;
+    let guard = 0;
+    while (collected < totalRefund && guard < 100000) {
+      const p = ordered[i % ordered.length];
+      expenseShare[p.id] += 1000;
+      collected += 1000;
+      i++; guard++;
+    }
+    // 3) 초과분(surplus)은 결제자에게 환급(가장 많이 낸 결제자)
+    surplus = collected - totalRefund; // >= 0
+    if (surplus > 0) {
+      let topPayer = null, max = 0;
+      state.participants.forEach(p => {
+        if (paymentRefund[p.id] > max) { max = paymentRefund[p.id]; topPayer = p.id; }
+      });
+      if (topPayer) paymentRefund[topPayer] += surplus;
+    }
   }
   
   // 정산 테이블
@@ -1530,30 +1592,37 @@ function renderSummary() {
   
   // 분담 방식 안내
   const note = document.getElementById('settlement-note');
-  const totalRefund = Object.values(paymentRefund).reduce((s, v) => s + v, 0);
-  const unpaidExpense = totalExpense - totalRefund;
-  
   let noteHtml = '';
-  if (totalExpense > 0 && totalProfit > 0) {
-    const detail = profitPlayers.map(p => {
-      const ratio = (playerStats[p.id].actualPnl / totalProfit * 100).toFixed(1);
-      return `${p.name}: ${ratio}% (${fmt(expenseShare[p.id])})`;
-    }).join(' · ');
-    noteHtml = `<strong style="color: var(--gold);">비용 분담 방식</strong><br>총 비용 ${fmt(totalExpense)}원을 흑자 플레이어들이 흑자 비율대로 천 원 단위에서 반올림하여 부담합니다.<br>${detail}`;
+  if (totalRefund > 0 && totalProfit > 0) {
+    const detail = profitPlayers
+      .filter(p => expenseShare[p.id] > 0)
+      .map(p => {
+        const ratio = (playerStats[p.id].actualPnl / totalProfit * 100).toFixed(1);
+        return `${escapeHtml(p.name)}: ${ratio}% (${fmt(expenseShare[p.id])})`;
+      }).join(' · ');
+    noteHtml = `<strong style="color: var(--gold);">비용 분담 방식</strong><br>결제자에게 돌려줄 비용 ${fmt(totalRefund)}원을 흑자 플레이어들이 흑자 비율대로 천 원 단위로 부담합니다. 모자라는 경우 올림 처리해 결제자가 손해 보지 않도록 했어요.<br>${detail}`;
     
     // 결제자 환급 안내
     const refunders = state.participants.filter(p => paymentRefund[p.id] > 0);
     if (refunders.length > 0) {
-      const refundDetail = refunders.map(p => `${p.name}: +${fmt(paymentRefund[p.id])}`).join(' · ');
+      const refundDetail = refunders.map(p => `${escapeHtml(p.name)}: +${fmt(paymentRefund[p.id])}`).join(' · ');
       noteHtml += `<br><br><strong style="color: var(--gold);">결제 환급</strong><br>${refundDetail}`;
     }
-    if (unpaidExpense > 0) {
-      noteHtml += `<br><br><span style="color: var(--red);">⚠ 결제자 미지정 비용: ${fmt(unpaidExpense)}원</span>`;
+    if (surplus > 0) {
+      noteHtml += `<br><span style="color: var(--text-dim);">※ 올림으로 더 걷힌 ${fmt(surplus)}원은 결제자 환급에 포함했어요 (결제자에게 유리하게 처리).</span>`;
     }
-  } else if (totalExpense > 0) {
-    noteHtml = `<strong style="color: var(--gold);">알림</strong> · 흑자 플레이어가 없어 비용 분담이 계산되지 않았어요. 모두 적자면 별도 협의가 필요해요.`;
+    if (unpaidExpense > 0) {
+      noteHtml += `<br><br><span style="color: var(--red);">⚠ 결제자 미지정 비용 ${fmt(unpaidExpense)}원은 정산에서 제외했어요. 결제자를 지정하면 자동으로 분담·환급에 반영됩니다.</span>`;
+    }
+  } else if (totalExpense > 0 && totalProfit <= 0) {
+    noteHtml = `<strong style="color: var(--gold);">알림</strong> · 흑자 플레이어가 없어 비용 분담이 계산되지 않았어요. 모두 적자면 결제 비용은 별도 협의가 필요해요.`;
+    if (unpaidExpense > 0) {
+      noteHtml += `<br><span style="color: var(--red);">⚠ 결제자 미지정 비용 ${fmt(unpaidExpense)}원이 있어요.</span>`;
+    }
+  } else if (totalExpense > 0 && totalRefund === 0) {
+    noteHtml = `<span style="color: var(--red);">⚠ 모든 비용에 결제자가 지정되지 않았어요. 결제자를 지정하면 자동으로 분담·환급이 계산돼요.</span>`;
   } else {
-    noteHtml = `비용을 입력하면 흑자 플레이어들의 비용 분담이 자동 계산돼요.`;
+    noteHtml = `비용을 입력하고 결제자를 지정하면 흑자 플레이어들의 비용 분담이 자동 계산돼요.`;
   }
   note.innerHTML = noteHtml;
 }
