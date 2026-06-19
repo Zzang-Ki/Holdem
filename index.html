@@ -9,6 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -960,6 +964,22 @@
     .hero-banner .hm-spade{ width:66px; height:66px; }
   }
   /* ===== /HERO BANNER ===== */
+
+  /* ===== 공유/권한 ===== */
+  #host-bar { text-align:center; margin:-12px 0 18px; font-size:13px; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  #host-bar .host-tag { color:var(--text-dim); font-weight:600; }
+  #host-bar button { padding:7px 14px; border-radius:9px; border:1px solid var(--border); background:var(--bg-card); color:var(--text); font-weight:600; cursor:pointer; }
+  #host-bar button:hover { background:var(--bg-elev); }
+  body.view-only .btn-gold,
+  body.view-only .step-btn,
+  body.view-only .btn-danger,
+  body.view-only .btn-delete-session,
+  body.view-only .exp-item-del,
+  body.view-only [onclick^="removePlayer"],
+  body.view-only [onclick="resetAll()"] { display:none !important; }
+  body.view-only input:not(#import-file),
+  body.view-only select { pointer-events:none; opacity:.7; }
+  /* ===== /공유/권한 ===== */
 </style>
 </head>
 <body>
@@ -977,6 +997,7 @@
   </div>
 </div>
 <!-- ===== /HERO BANNER ===== -->
+<div id="host-bar"></div>
 
 <div class="container">
 
@@ -1118,8 +1139,92 @@ function sessionDiffText(totalBuyin, totalRemain) {
   return `* 바인과 남은 금액이 ${fmtKor(Math.abs(diff))} 차이나요 (${dir})`;
 }
 
+// ===== Firebase 실시간 공유 =====
+const firebaseConfig = {
+  apiKey: "AIzaSyB0MRimsjniKfksyJFapylWMc3iofq3uTw",
+  authDomain: "holdem-mates.firebaseapp.com",
+  projectId: "holdem-mates",
+  storageBucket: "holdem-mates.firebasestorage.app",
+  messagingSenderId: "468194744203",
+  appId: "1:468194744203:web:5a62cca4a347dfed65c18e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const roomId = new URLSearchParams(location.search).get('room'); // ?room=CODE
+let currentUser = null, roomHostUid = null, isHost = false;
+let applyingRemote = false; // 원격 반영 중 재저장 방지
+
+function roomRef() { return db.collection('rooms').doc(roomId); }
+function hostLogin() {
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+      .catch(e => alert('로그인 실패: ' + e.message));
+}
+function hostLogout() { auth.signOut(); }
+
+auth.onAuthStateChanged(u => { currentUser = u; recomputeRole(); });
+
+function recomputeRole() {
+  isHost = !!(currentUser && roomHostUid && currentUser.uid === roomHostUid);
+  applyPermissionUI();
+}
+
+function applyPermissionUI() {
+  document.body.classList.toggle('view-only', !!roomId && !isHost);
+  const bar = document.getElementById('host-bar');
+  if (!bar) return;
+  if (!roomId) {
+    bar.innerHTML = '<button onclick="createRoom()">+ 공유 방 만들기</button>';
+  } else if (isHost) {
+    bar.innerHTML = '<span class="host-tag">♠ 방장: ' + (currentUser.displayName || '나') +
+                    '</span> <button onclick="hostLogout()">로그아웃</button>';
+  } else {
+    bar.innerHTML = '<span class="host-tag">👀 보기 전용</span> ' +
+                    '<button onclick="hostLogin()">방장 로그인</button>';
+  }
+}
+
+function subscribeRoom() {
+  if (!roomId) return;
+  roomRef().onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data();
+    roomHostUid = data.hostUid || null;
+    recomputeRole();
+    if (snap.metadata.hasPendingWrites) return; // 내가 방금 쓴 변경은 무시(루프 방지)
+    if (data.state) {
+      applyingRemote = true;
+      state = data.state;
+      try { render(); } finally { applyingRemote = false; }
+    }
+  }, err => console.error('구독 오류', err));
+}
+
+async function createRoom() {
+  if (!auth.currentUser) {
+    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  }
+  const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+  await db.collection('rooms').doc(code).set({
+    hostUid: auth.currentUser.uid,
+    hostName: auth.currentUser.displayName || '',
+    state: state,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  location.search = '?room=' + code; // 그 방으로 이동 → 링크를 친구에게 공유
+}
+// ===== /Firebase =====
+
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); // 로컬 캐시 유지
+  if (roomId && isHost && !applyingRemote) {
+    roomRef().set({
+      hostUid: roomHostUid || auth.currentUser.uid,
+      state: state,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(e => console.error('저장 오류', e));
+  }
 }
 
 function load() {
@@ -1984,6 +2089,7 @@ document.getElementById('reset-modal').addEventListener('click', e => {
 
 load();
 render();
+subscribeRoom(); // 방이 있으면 원격 구독 → 곧 최신본으로 교체
 </script>
 </body>
 </html>
