@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>홀덤 정산판</title>
+<meta name="theme-color" content="#EAF1FC">
+<title>Holdem Mates</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -935,9 +936,48 @@
     padding: 6px 0 !important;
   }
   .session-capturing .buyin-stepper { gap: 0 !important; }
+
+  /* ===== HERO BANNER ===== */
+  .hero-banner{
+    --logo-gap: 12px;            /* 로고 ↔ 타이틀 간격 (기본 24px의 50%) */
+    margin: -30px -20px 28px;    /* body 패딩(30/20) 상쇄 → 풀 와이드 */
+    padding: 48px 20px 44px;
+    background:
+      radial-gradient(circle at 50% -30%, rgba(37,99,201,.12) 0%, transparent 62%),
+      linear-gradient(160deg, #E8F0FB 0%, #F4F6FA 100%);
+    border-bottom: 1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center;
+  }
+  .hero-banner .hero-logo{
+    display:flex; flex-direction:column; align-items:center;
+    gap: var(--logo-gap);
+  }
+  .hero-banner .hm-spade{ width:88px; height:88px; display:block; }
+  .hero-banner .hm-wordmark{ width:min(330px,74vw); height:auto; display:block; }
+  @media (max-width:600px){
+    .hero-banner{ margin:-16px -12px 20px; padding:36px 16px 32px; }
+    .hero-banner .hm-spade{ width:66px; height:66px; }
+  }
+  /* ===== /HERO BANNER ===== */
 </style>
 </head>
 <body>
+<!-- ===== HERO BANNER (HoldemMates) ===== -->
+<div class="hero-banner">
+  <div class="hero-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="hm-spade" aria-hidden="true">
+<defs><clipPath id="hsp"><path d="M50,8 C50,8 20,38 12,52 C4,66 8,82 24,82 C36,82 44,74 48,66 C47,76 44,84 42,90 L58,90 C56,84 53,76 52,66 C56,74 64,82 76,82 C92,82 96,66 88,52 C80,38 50,8 50,8 Z"/></clipPath></defs>
+<g clip-path="url(#hsp)"><rect width="100" height="100" fill="#13294B"/><rect x="50" width="50" height="100" fill="#2563C9"/></g>
+</svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 801.8 83.9" class="hm-wordmark" aria-label="HOLDEMMATES">
+<g transform="translate(6.00,77.20) scale(1,-1)"><path d="M67.00 70.20 L67.00 0.00 L49.91 0.00 L49.91 28.91 L23.30 28.91 L23.30 0.00 L6.20 0.00 L6.20 70.20 L23.30 70.20 L23.30 42.70 L49.91 42.70 L49.91 70.20 L67.00 70.20 Z M112.51 -0.70 Q102.60 -0.70 94.35 3.89 Q86.10 8.50 81.24 16.75 Q76.40 25.00 76.40 35.30 Q76.40 45.59 81.24 53.80 Q86.10 62.00 94.35 66.59 Q102.60 71.20 112.51 71.20 Q122.40 71.20 130.65 66.59 Q138.90 62.00 143.65 53.80 Q148.40 45.59 148.40 35.30 Q148.40 25.00 143.60 16.75 Q138.80 8.50 130.60 3.89 Q122.40 -0.70 112.51 -0.70 Z M112.51 14.91 Q120.90 14.91 125.94 20.50 Q131.01 26.09 131.01 35.30 Q131.01 44.59 125.94 50.14 Q120.90 55.70 112.51 55.70 Q104.01 55.70 98.94 50.20 Q93.90 44.70 93.90 35.30 Q93.90 26.00 98.94 20.45 Q104.01 14.91 112.51 14.91 Z M175.00 13.20 L197.40 13.20 L197.40 0.00 L157.90 0.00 L157.90 70.20 L175.00 70.20 L175.00 13.20 Z M231.90 70.20 Q242.99 70.20 251.29 65.80 Q259.60 61.41 264.15 53.45 Q268.70 45.50 268.70 35.09 Q268.70 24.80 264.15 16.80 Q259.60 8.80 251.24 4.39 Q242.90 0.00 231.90 0.00 L205.60 0.00 L205.60 70.20 L231.90 70.20 Z M230.81 14.80 Q240.49 14.80 245.90 20.09 Q251.31 25.41 251.31 35.09 Q251.31 44.80 245.90 50.19 Q240.49 55.59 230.81 55.59 L222.70 55.59 L222.70 14.80 L230.81 14.80 Z M295.40 56.50 L295.40 42.30 L318.30 42.30 L318.30 29.09 L295.40 29.09 L295.40 13.70 L321.30 13.70 L321.30 0.00 L278.30 0.00 L278.30 70.20 L321.30 70.20 L321.30 56.50 L295.40 56.50 Z M411.90 70.20 L411.90 0.00 L394.79 0.00 L394.79 42.09 L379.11 0.00 L365.29 0.00 L349.50 42.20 L349.50 0.00 L332.40 0.00 L332.40 70.20 L352.61 70.20 L372.29 21.59 L391.79 70.20 L411.90 70.20 Z" fill="#13294B"/></g>
+<g transform="translate(459.90,77.20) scale(1,-1)"><path d="M85.70 70.20 L85.70 0.00 L68.59 0.00 L68.59 42.09 L52.91 0.00 L39.09 0.00 L23.30 42.20 L23.30 0.00 L6.20 0.00 L6.20 70.20 L26.41 70.20 L46.09 21.59 L65.59 70.20 L85.70 70.20 Z M141.71 12.41 L115.50 12.41 L111.30 0.00 L93.39 0.00 L118.80 70.20 L138.60 70.20 L164.00 0.00 L145.89 0.00 L141.71 12.41 Z M137.30 25.59 L128.60 51.30 L120.00 25.59 L137.30 25.59 Z M222.20 70.20 L222.20 56.50 L203.59 56.50 L203.59 0.00 L186.50 0.00 L186.50 56.50 L167.91 56.50 L167.91 70.20 L222.20 70.20 Z M247.90 56.50 L247.90 42.30 L270.80 42.30 L270.80 29.09 L247.90 29.09 L247.90 13.70 L273.80 13.70 L273.80 0.00 L230.80 0.00 L230.80 70.20 L273.80 70.20 L273.80 56.50 L247.90 56.50 Z M310.29 -0.70 Q302.61 -0.70 296.50 1.80 Q290.40 4.30 286.75 9.19 Q283.11 14.09 282.90 21.00 L301.11 21.00 Q301.50 17.09 303.79 15.05 Q306.11 13.00 309.79 13.00 Q313.61 13.00 315.79 14.75 Q318.00 16.50 318.00 19.59 Q318.00 22.20 316.25 23.89 Q314.50 25.59 311.95 26.69 Q309.40 27.80 304.70 29.20 Q297.90 31.30 293.59 33.39 Q289.29 35.50 286.20 39.59 Q283.11 43.70 283.11 50.30 Q283.11 60.09 290.20 65.64 Q297.29 71.20 308.70 71.20 Q320.29 71.20 327.39 65.64 Q334.50 60.09 335.00 50.20 L316.50 50.20 Q316.29 53.59 314.00 55.55 Q311.70 57.50 308.11 57.50 Q305.00 57.50 303.09 55.84 Q301.20 54.20 301.20 51.09 Q301.20 47.70 304.40 45.80 Q307.61 43.91 314.40 41.70 Q321.20 39.41 325.45 37.30 Q329.70 35.20 332.79 31.20 Q335.90 27.20 335.90 20.91 Q335.90 14.91 332.84 10.00 Q329.79 5.09 324.00 2.19 Q318.20 -0.70 310.29 -0.70 Z" fill="#2563C9"/></g>
+</svg>
+  </div>
+</div>
+<!-- ===== /HERO BANNER ===== -->
+
 <div class="container">
 
 <!-- Date -->
