@@ -26,7 +26,8 @@
   .wrap{width:100%; max-width:560px;}
 
   header{margin:6px 2px 16px;}
-  .logo{font-family:'Poppins',sans-serif; font-weight:700; font-size:17px; color:var(--navy); letter-spacing:-.02em; text-align:left;}
+  .logo{font-family:'Poppins',sans-serif; font-weight:700; font-size:17px; color:var(--navy); letter-spacing:-.02em; text-align:left; text-decoration:none; display:inline-flex; align-items:center; gap:6px;}
+  .logo .back{font-size:18px; line-height:1; color:var(--navy);}
   .logo b{color:var(--teal);}
   .title{font-family:'Poppins',sans-serif; font-weight:700; font-size:24px; color:var(--navy); letter-spacing:-.01em; text-align:center; margin-top:10px;}
   .t-push{color:var(--green);}
@@ -35,10 +36,10 @@
   .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(31,58,95,.05);}
 
-  .row{margin-bottom:12px;}
+  .row{margin-bottom:16px;}
   .row:last-child{margin-bottom:0;}
-  .label{font-size:14px; font-weight:700; color:var(--navy); letter-spacing:.06em; margin-bottom:6px; text-transform:uppercase;}
-  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .label{font-size:14px; font-weight:700; color:var(--navy); letter-spacing:.06em; margin-bottom:6px;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
   .chip{
     border:1.5px solid var(--line); background:#fff; color:var(--ink);
     border-radius:999px; padding:7px 13px; font-size:12px; font-weight:600;
@@ -82,32 +83,32 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="logo">Holdem<b>Mates</b></div>
+    <a class="logo" href="/"><span class="back">&lt;</span> Holdem<b>Mates</b></a>
     <div class="title"><span class="t-push">Push</span>/<span class="t-fold">Fold</span> Chart</div>
   </header>
 
   <div class="card">
     <div class="row">
-      <div class="label">행동 (Action)</div>
+      <div class="label">행동</div>
       <div class="chips" id="modes">
         <div class="chip on" data-v="push">올인하기 (Push)</div>
         <div class="chip" data-v="call">콜하기 (Call)</div>
       </div>
     </div>
     <div class="row">
-      <div class="label">인원 (Players)</div>
+      <div class="label">인원</div>
       <div class="chips" id="players"></div>
     </div>
     <div class="row">
-      <div class="label" id="posLabel">내 위치 (Position)</div>
+      <div class="label" id="posLabel">내 위치</div>
       <div class="chips" id="positions"></div>
     </div>
     <div class="row">
-      <div class="label">보유 칩 (Stack)</div>
+      <div class="label">보유 칩</div>
       <div class="chips" id="stacks"></div>
     </div>
     <div class="row">
-      <div class="label">앤티 (Ante)</div>
+      <div class="label">앤티</div>
       <div class="chips" id="antes">
         <div class="chip on" data-v="bb">Big (1 BB)</div>
         <div class="chip" data-v="none">No Ante</div>
@@ -266,7 +267,7 @@ function render(){
     c.onclick=()=>{ S.mode=c.dataset.v; S.sel=null; render(); };
   });
   document.getElementById('posLabel').textContent =
-    S.mode==='push' ? '내 위치 (Position)' : '상대 쇼버 위치 (나는 BB)';
+    S.mode==='push' ? '내 위치' : '상대 쇼버 위치';
 
   /* 레인지 계산 */
   const basePct = pushPct(S.pb, S.stack, S.ante);
