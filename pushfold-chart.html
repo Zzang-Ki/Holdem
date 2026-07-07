@@ -39,6 +39,7 @@
   .row{margin-bottom:16px;}
   .row:last-child{margin-bottom:0;}
   .label{font-size:14px; font-weight:700; color:var(--navy); letter-spacing:.06em; margin-bottom:6px;}
+  .hint{font-size:11px; color:var(--ink-soft); margin-top:7px; line-height:1.5;}
   .chips{display:flex; flex-wrap:wrap; gap:8px;}
   .chip{
     border:1.5px solid var(--line); background:#fff; color:var(--ink);
@@ -91,17 +92,22 @@
     <div class="row">
       <div class="label">행동</div>
       <div class="chips" id="modes">
-        <div class="chip on" data-v="push">올인하기 (Push)</div>
-        <div class="chip" data-v="call">콜하기 (Call)</div>
+        <div class="chip on" data-v="push">올인하기</div>
+        <div class="chip" data-v="call">상대 올인에 콜하기</div>
       </div>
+      <div class="hint" id="modeHint"></div>
     </div>
     <div class="row">
       <div class="label">인원</div>
       <div class="chips" id="players"></div>
     </div>
     <div class="row">
-      <div class="label" id="posLabel">내 위치</div>
+      <div class="label" id="posLabel">내 포지션</div>
       <div class="chips" id="positions"></div>
+    </div>
+    <div class="row" id="myPosRow" style="display:none">
+      <div class="label">내 포지션</div>
+      <div class="chips" id="myPos"></div>
     </div>
     <div class="row">
       <div class="label">보유 칩</div>
@@ -135,7 +141,7 @@
 
   <div class="note">
     ⚠️ ChipEV Nash 균형 근사치예요. Push는 first-in(앞에서 아무도 액션 안 함) 기준,
-    Call은 BB에서 상대의 Nash 쇼브를 받는 상황 기준이에요. ICM(상금 구조)·상대 성향은 미반영 —
+    Call은 상대의 first-in 올인을 내가 받는 상황 기준이에요. ICM(상금 구조)·상대 성향은 미반영 —
     특히 "절박하지 않은 초보의 자발적 올인"은 레인지가 프리미엄에 몰려 있으니 Call 차트보다 훨씬 타이트하게 받으세요.
   </div>
 </div>
@@ -225,7 +231,7 @@ function positionList(nPlayers){
 }
 
 /* 상태 */
-const S = { mode:'push', players:9, pb:2, stack:10, ante:'bb', sel:null };
+const S = { mode:'push', players:9, pb:2, stack:10, ante:'bb', myPos:'bb', sel:null };
 
 /* UI 빌드 */
 function buildChips(el, items, cur, onPick, tealStyle){
@@ -246,12 +252,31 @@ function render(){
 
   const posEl=document.getElementById('positions');
   posEl.innerHTML='';
-  positionList(S.players).forEach(p=>{
+  /* Call 모드: 상대(쇼버)는 내 앞에서 액션한 사람이어야 함 */
+  let posItems = positionList(S.players);
+  if(S.mode==='call'){
+    if(S.myPos==='sb') posItems = posItems.filter(p=>p.pb!==1);           // SB인 나는 SB 올인을 못 받음
+    if(S.myPos==='other') posItems = posItems.filter(p=>p.pb>2);          // 논블라인드면 SB/BTN 올인은 내 뒤
+    if(!posItems.some(p=>p.pb===S.pb) && posItems.length) S.pb = posItems[posItems.length-1].pb;
+  }
+  posItems.forEach(p=>{
     const d=document.createElement('div');
     d.className='chip'+(p.pb===S.pb?' on':'');
     d.textContent=p.name;
     d.onclick=()=>{ S.pb=p.pb; render(); };
     posEl.appendChild(d);
+  });
+
+  document.getElementById('myPosRow').style.display = S.mode==='call' ? '' : 'none';
+  const MYPOS = [{v:'bb',t:'BB'},{v:'sb',t:'SB'},{v:'other',t:'블라인드 외'}];
+  const myPosEl=document.getElementById('myPos');
+  myPosEl.innerHTML='';
+  MYPOS.forEach(m=>{
+    const d=document.createElement('div');
+    d.className='chip'+(m.v===S.myPos?' on':'');
+    d.textContent=m.t;
+    d.onclick=()=>{ S.myPos=m.v; render(); };
+    myPosEl.appendChild(d);
   });
 
   buildChips(document.getElementById('stacks'),
@@ -267,7 +292,10 @@ function render(){
     c.onclick=()=>{ S.mode=c.dataset.v; S.sel=null; render(); };
   });
   document.getElementById('posLabel').textContent =
-    S.mode==='push' ? '내 위치' : '상대 쇼버 위치';
+    S.mode==='push' ? '내 포지션' : '올인한 상대의 포지션';
+  document.getElementById('modeHint').textContent = S.mode==='push'
+    ? '내 앞 포지션이 전부 폴드했을 때, 내가 첫 올인을 할지 기준이에요.'
+    : '상대의 올인에 내가 콜할지 기준이에요. 올인한 상대의 포지션과 내 포지션을 고르세요.';
 
   /* 레인지 계산 */
   const basePct = pushPct(S.pb, S.stack, S.ante);
@@ -275,9 +303,12 @@ function render(){
   if(S.mode==='push'){
     pct = basePct;
   } else {
-    /* 콜 레인지: 상대 Nash 쇼브 레인지 대비, 스택이 짧을수록 팟오즈가 좋아 넓게 콜 */
+    /* 콜 레인지: 상대 Nash 쇼브 레인지 대비.
+       스택이 짧을수록 팟오즈가 좋아 넓게, 내 포지션에 따라 조정
+       (BB: 이미 낸 2 BB만큼 오즈 유리 / SB: 1 BB + 뒤에 BB 존재 / 논블라인드: 낸 돈 없음 + 뒤에 여러 명) */
     const ratio = 0.52 + 1.5/S.stack;
-    pct = Math.min(100, Math.round(basePct * ratio * (S.ante==='bb'?1:0.93) * 10)/10);
+    const myMult = {bb:1, sb:0.85, other:0.62}[S.myPos];
+    pct = Math.min(100, Math.round(basePct * ratio * myMult * (S.ante==='bb'?1:0.93) * 10)/10);
   }
   const target = pct/100*1326;
   const pushSet = new Set(); let cum=0;
@@ -287,11 +318,12 @@ function render(){
   }
 
   const posName = positionList(S.players).find(p=>p.pb===S.pb).name;
+  const myPosName = {bb:'BB', sb:'SB', other:'블라인드 외'}[S.myPos];
   document.getElementById('pct').innerHTML = pct.toFixed(1)+'<small>%</small>';
   document.getElementById('combos').textContent = cum.toLocaleString();
   document.getElementById('situ').textContent = S.mode==='push'
     ? `${S.players}명 · ${posName} 올인 · ${S.stack} BB · ${S.ante==='bb'?'Big Ante':'No Ante'}`
-    : `${S.players}명 · BB 콜 vs ${posName} 올인 · ${S.stack} BB · ${S.ante==='bb'?'Big Ante':'No Ante'}`;
+    : `${S.players}명 · ${myPosName} 콜 vs ${posName} 올인 · ${S.stack} BB · ${S.ante==='bb'?'Big Ante':'No Ante'}`;
   document.getElementById('legendMain').innerHTML =
     `<span class="dot" style="background:var(--green)"></span>` +
     (S.mode==='push' ? '올인 (Push)' : '콜 (Call)');
