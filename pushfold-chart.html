@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Push/Fold Chart — HoldemMates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1F3A5F; --navy-deep:#16294a;
+    --teal:#14919B; --teal-dark:#0B6E77; --teal-soft:#E3F4F5;
+    --green:#14A06A; --green-dark:#0C7A4F; --green-soft:#E4F5EE;
+    --cream:#FBF8F1; --card:#FFFFFF;
+    --ink:#2B3442; --ink-soft:#6B7686;
+    --fold:#EEF1F4; --fold-ink:#A8B0BC;
+    --line:#E5E1D6;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    padding:16px 12px 40px; display:flex; justify-content:center;
+  }
+  .wrap{width:100%; max-width:560px;}
+
+  header{margin:6px 2px 16px;}
+  .logo{font-family:'Poppins',sans-serif; font-weight:700; font-size:17px; color:var(--navy); letter-spacing:-.02em; text-align:left;}
+  .logo b{color:var(--teal);}
+  .title{font-family:'Poppins',sans-serif; font-weight:700; font-size:24px; color:var(--navy); letter-spacing:-.01em; text-align:center; margin-top:10px;}
+  .t-push{color:var(--green);}
+  .t-fold{color:#D64545;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(31,58,95,.05);}
+
+  .row{margin-bottom:12px;}
+  .row:last-child{margin-bottom:0;}
+  .label{font-size:14px; font-weight:700; color:var(--navy); letter-spacing:.06em; margin-bottom:6px; text-transform:uppercase;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink);
+    border-radius:999px; padding:7px 13px; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .12s; user-select:none;
+  }
+  .chip.on{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .chip:active{transform:scale(.95);}
+
+  .stats{display:flex; align-items:center; gap:14px; padding:10px 4px 2px;}
+  .stat-main{font-family:'Poppins',sans-serif; font-weight:700; font-size:34px; color:var(--green-dark); line-height:1;}
+  .stat-main small{font-size:16px;}
+  .stat-side{font-size:12px; color:var(--ink-soft); line-height:1.5;}
+  .stat-side b{color:var(--navy);}
+
+  .grid{
+    display:grid; grid-template-columns:repeat(13,1fr); gap:2px;
+    margin-top:10px;
+  }
+  .cell{
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-size:clamp(7px,2.3vw,11px); font-weight:600; border-radius:4px;
+    background:var(--fold); color:var(--fold-ink); cursor:pointer; transition:filter .1s;
+  }
+  .cell.push{background:var(--green); color:#fff;}
+  .cell.pair{outline:1.5px solid rgba(31,58,95,.22); outline-offset:-1.5px;}
+  .cell.sel{filter:brightness(.8);}
+
+  .info{
+    margin-top:10px; min-height:20px; font-size:13px; color:var(--ink);
+    background:var(--green-soft); border-radius:8px; padding:8px 12px; display:none;
+  }
+  .info.show{display:block;}
+  .info b{color:var(--green-dark);}
+
+  .legend{display:flex; gap:14px; margin-top:10px; font-size:11px; color:var(--ink-soft); align-items:center;}
+  .dot{width:11px; height:11px; border-radius:3px; display:inline-block; vertical-align:-1px; margin-right:4px;}
+
+  .note{font-size:11px; color:var(--ink-soft); line-height:1.6; margin-top:4px; padding:0 4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">Holdem<b>Mates</b></div>
+    <div class="title"><span class="t-push">Push</span>/<span class="t-fold">Fold</span> Chart</div>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <div class="label">행동 (Action)</div>
+      <div class="chips" id="modes">
+        <div class="chip on" data-v="push">올인하기 (Push)</div>
+        <div class="chip" data-v="call">콜하기 (Call)</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">인원 (Players)</div>
+      <div class="chips" id="players"></div>
+    </div>
+    <div class="row">
+      <div class="label" id="posLabel">내 위치 (Position)</div>
+      <div class="chips" id="positions"></div>
+    </div>
+    <div class="row">
+      <div class="label">보유 칩 (Stack)</div>
+      <div class="chips" id="stacks"></div>
+    </div>
+    <div class="row">
+      <div class="label">앤티 (Ante)</div>
+      <div class="chips" id="antes">
+        <div class="chip on" data-v="bb">Big (1 BB)</div>
+        <div class="chip" data-v="none">No Ante</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stats">
+      <div class="stat-main" id="pct">—<small>%</small></div>
+      <div class="stat-side">
+        <b id="situ">—</b><br>
+        푸시 콤보 <b id="combos">—</b> / 1,326
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="info" id="info"></div>
+    <div class="legend">
+      <span id="legendMain"><span class="dot" style="background:var(--green)"></span>올인 (Push)</span>
+      <span><span class="dot" style="background:var(--fold)"></span>폴드 (Fold)</span>
+      <span>대각선 = 포켓페어</span>
+    </div>
+  </div>
+
+  <div class="note">
+    ⚠️ ChipEV Nash 균형 근사치예요. Push는 first-in(앞에서 아무도 액션 안 함) 기준,
+    Call은 BB에서 상대의 Nash 쇼브를 받는 상황 기준이에요. ICM(상금 구조)·상대 성향은 미반영 —
+    특히 "절박하지 않은 초보의 자발적 올인"은 레인지가 프리미엄에 몰려 있으니 Call 차트보다 훨씬 타이트하게 받으세요.
+  </div>
+</div>
+
+<script>
+const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+
+/* 전 핸드 169개 생성 (그리드 좌표 포함) */
+function handName(r,c){
+  if(r===c) return RANKS[r]+RANKS[c];
+  return r<c ? RANKS[r]+RANKS[c]+'s' : RANKS[c]+RANKS[r]+'o';
+}
+const ALL = [];
+for(let r=0;r<13;r++) for(let c=0;c<13;c++) ALL.push(handName(r,c));
+const ALL_SET = new Set(ALL);
+
+/* 근사 Nash 푸시 우선순위 (앞일수록 먼저 올인 레인지에 포함) */
+const RAW_ORDER = `
+AA KK QQ JJ AKs AKo TT AQs 99 AJs AQo KQs 88 ATs AJo KJs 77 A9s KTs QJs
+ATo KQo 66 A8s QTs A5s K9s JTs A7s A4s 55 A9o A6s A3s KJo Q9s A2s J9s T9s 44
+A8o K8s KTo QJo K7s A7o Q8s 33 K6s J8s T8s 98s A5o K5s QTo A6o 22 K4s Q7s A4o
+K9o J7s T7s 97s 87s K3s Q6s A3o K2s Q5s JTo 76s 86s 96s A2o Q4s J6s T6s 65s
+K8o Q9o J9o T9o Q3s J5s 75s 54s 95s Q2s K7o J4s 85s 64s T5s J8o T8o 98o
+K6o J3s T4s 53s 94s 74s J2s Q8o K5o 63s T3s 84s 43s 93s T2s 52s
+K4o Q7o 73s J7o T7o 97o 87o 92s 62s 42s 82s K3o Q6o 83s 32s 72s
+K2o Q5o 76o 86o 96o Q4o J6o T6o 65o 75o 54o 95o Q3o J5o 85o 64o T5o
+Q2o J4o 53o 94o 74o J3o T4o 63o 84o 43o 93o T3o J2o 52o 73o 92o
+T2o 62o 42o 82o 83o 32o 72o
+`.trim().split(/\s+/);
+
+/* 중복 제거 + 누락 핸드 뒤에 자동 보충 → 항상 169개 보장 */
+const seen = new Set(), ORDER = [];
+for(const h of RAW_ORDER){ if(ALL_SET.has(h) && !seen.has(h)){ seen.add(h); ORDER.push(h); } }
+for(const h of ALL){ if(!seen.has(h)) ORDER.push(h); }
+
+function combosOf(h){ return h.length===2 ? 6 : (h[2]==='s' ? 4 : 12); }
+const ORDER_INDEX = {}; ORDER.forEach((h,i)=>ORDER_INDEX[h]=i);
+
+/* 푸시 % 계산: 뒤에 남은 인원(playersBehind) × 스택 × 앤티 */
+const BASE10 = {1:60, 2:42, 3:31, 4:26, 5:22, 6:19, 7:16.5, 8:14.5, 9:13};
+const STACK_MULT = [[1,3.0],[2,2.2],[3,1.75],[5,1.45],[7,1.2],[10,1.0],[12,0.88],[15,0.74]];
+/* 초숏스택 하한: 1~3bb에서는 팟오즈상 포지션 불문 초광폭 푸시가 정답 */
+function shortFloor(bb){
+  if(bb<=1) return 88;
+  if(bb<=2) return 55;
+  if(bb<=3) return 38;
+  return 0;
+}
+function stackMult(bb){
+  const p = STACK_MULT;
+  if(bb<=p[0][0]) return p[0][1];
+  if(bb>=p[p.length-1][0]) return p[p.length-1][1];
+  for(let i=0;i<p.length-1;i++){
+    if(bb>=p[i][0] && bb<=p[i+1][0]){
+      const t=(bb-p[i][0])/(p[i+1][0]-p[i][0]);
+      return p[i][1]+t*(p[i+1][1]-p[i][1]);
+    }
+  }
+  return 1;
+}
+function pushPct(pb, bb, ante){
+  const v = BASE10[pb] * stackMult(bb) * (ante==='bb' ? 1 : 0.78);
+  return Math.min(100, Math.round(Math.max(v, shortFloor(bb))*10)/10);
+}
+
+/* 포지션 이름: PB(뒤에 남은 인원) 기준 */
+function positionList(nPlayers){
+  const seats = nPlayers-1; // BB 제외
+  const tail = ['SB','BTN','CO','HJ','LJ','MP'];
+  const list = [];
+  for(let pb=1; pb<=seats; pb++){
+    let name;
+    if(pb<=6) name = tail[pb-1];
+    else name = 'UTG' + (seats-pb>0 ? '+'+(seats-pb) : '');
+    list.push({pb, name});
+  }
+  if(seats===1){ list[0].name='SB/BTN'; }
+  else if(seats>=4 && seats<=6){ list[seats-1].name='UTG'; }
+  else if(seats>6){
+    // 7석 이상: MP 뒤쪽은 UTG 계열로
+    for(let pb=7; pb<=seats; pb++){
+      const fromFront = seats-pb; // 0 = 최전방
+      list[pb-1].name = fromFront===0 ? 'UTG' : 'UTG+'+fromFront;
+    }
+  }
+  return list.reverse(); // UTG 먼저 표시
+}
+
+/* 상태 */
+const S = { mode:'push', players:9, pb:2, stack:10, ante:'bb', sel:null };
+
+/* UI 빌드 */
+function buildChips(el, items, cur, onPick, tealStyle){
+  el.innerHTML='';
+  items.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='chip'+(tealStyle?' teal':'')+(it.v===cur?' on':'');
+    d.textContent=it.t;
+    d.onclick=()=>{ onPick(it.v); render(); };
+    el.appendChild(d);
+  });
+}
+
+function render(){
+  buildChips(document.getElementById('players'),
+    [2,3,4,5,6,7,8,9,10].map(n=>({v:n,t:n+'명'})), S.players,
+    v=>{ S.players=v; const ps=positionList(v); if(!ps.some(p=>p.pb===S.pb)) S.pb=Math.min(S.pb, v-1); });
+
+  const posEl=document.getElementById('positions');
+  posEl.innerHTML='';
+  positionList(S.players).forEach(p=>{
+    const d=document.createElement('div');
+    d.className='chip'+(p.pb===S.pb?' on':'');
+    d.textContent=p.name;
+    d.onclick=()=>{ S.pb=p.pb; render(); };
+    posEl.appendChild(d);
+  });
+
+  buildChips(document.getElementById('stacks'),
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>({v:n,t:n+' BB'})), S.stack, v=>S.stack=v);
+
+  document.querySelectorAll('#antes .chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.v===S.ante);
+    c.onclick=()=>{ S.ante=c.dataset.v; render(); };
+  });
+
+  document.querySelectorAll('#modes .chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.v===S.mode);
+    c.onclick=()=>{ S.mode=c.dataset.v; S.sel=null; render(); };
+  });
+  document.getElementById('posLabel').textContent =
+    S.mode==='push' ? '내 위치 (Position)' : '상대 쇼버 위치 (나는 BB)';
+
+  /* 레인지 계산 */
+  const basePct = pushPct(S.pb, S.stack, S.ante);
+  let pct;
+  if(S.mode==='push'){
+    pct = basePct;
+  } else {
+    /* 콜 레인지: 상대 Nash 쇼브 레인지 대비, 스택이 짧을수록 팟오즈가 좋아 넓게 콜 */
+    const ratio = 0.52 + 1.5/S.stack;
+    pct = Math.min(100, Math.round(basePct * ratio * (S.ante==='bb'?1:0.93) * 10)/10);
+  }
+  const target = pct/100*1326;
+  const pushSet = new Set(); let cum=0;
+  for(const h of ORDER){
+    if(cum>=target) break;
+    pushSet.add(h); cum+=combosOf(h);
+  }
+
+  const posName = positionList(S.players).find(p=>p.pb===S.pb).name;
+  document.getElementById('pct').innerHTML = pct.toFixed(1)+'<small>%</small>';
+  document.getElementById('combos').textContent = cum.toLocaleString();
+  document.getElementById('situ').textContent = S.mode==='push'
+    ? `${S.players}명 · ${posName} 올인 · ${S.stack} BB · ${S.ante==='bb'?'Big Ante':'No Ante'}`
+    : `${S.players}명 · BB 콜 vs ${posName} 올인 · ${S.stack} BB · ${S.ante==='bb'?'Big Ante':'No Ante'}`;
+  document.getElementById('legendMain').innerHTML =
+    `<span class="dot" style="background:var(--green)"></span>` +
+    (S.mode==='push' ? '올인 (Push)' : '콜 (Call)');
+
+  /* 그리드 */
+  const g=document.getElementById('grid'); g.innerHTML='';
+  for(let r=0;r<13;r++) for(let c=0;c<13;c++){
+    const h=handName(r,c);
+    const d=document.createElement('div');
+    d.className='cell'+(pushSet.has(h)?' push':'')+(r===c?' pair':'')+(S.sel===h?' sel':'');
+    d.textContent=h;
+    d.onclick=()=>{ S.sel = (S.sel===h ? null : h); render(); };
+    g.appendChild(d);
+  }
+
+  /* 선택 핸드 정보 */
+  const info=document.getElementById('info');
+  if(S.sel){
+    const isPush=pushSet.has(S.sel);
+    const rank=ORDER_INDEX[S.sel]+1;
+    info.className='info show';
+    const act = S.mode==='push' ? '올인' : '콜';
+    info.innerHTML = `<b>${S.sel}</b> — ${isPush?'✅ '+act:'❌ 폴드'} · 우선순위 ${rank}/169위 (${combosOf(S.sel)}콤보)`;
+  } else {
+    info.className='info';
+  }
+}
+render();
+</script>
+</body>
+</html>
