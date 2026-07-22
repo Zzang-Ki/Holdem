@@ -985,11 +985,22 @@
   body.view-only select { pointer-events:none; opacity:.7; }
   /* ===== /공유/권한 ===== */
 
-  /* ===== Lobby (리스트 화면) ===== */
+  /* ===== Home / Lobby (리스트 화면) ===== */
+  body.home-mode #lobby-view,
+  body.home-mode #detail-view,
+  body.home-mode .toolbar-fixed,
+  body.home-mode .footer-spacer { display:none !important; }
+  body.lobby-mode #home-view,
   body.lobby-mode #detail-view,
   body.lobby-mode .toolbar-fixed,
   body.lobby-mode .footer-spacer { display:none !important; }
+  body.detail-mode #home-view,
   body.detail-mode #lobby-view { display:none !important; }
+
+  .home-nav-btn{ display:block; width:100%; text-align:center; margin:10px 0; padding:13px 20px; border-radius:14px; border:none; cursor:pointer; box-sizing:border-box; text-decoration:none; font-family:'Noto Sans KR',sans-serif; font-size:14px; font-weight:700; color:#fff; }
+  .home-nav-btn.nav-gold{ background:var(--gold); }
+  .home-nav-btn.nav-gold:hover{ background:var(--gold-soft); }
+  .home-nav-btn.nav-dark{ background:#1F3A5F; }
 
   .lobby-head{ display:flex; align-items:center; justify-content:space-between; margin:6px 4px 14px; }
   .lobby-title{ font-family:'Montserrat','Noto Sans KR',sans-serif; font-weight:700; font-size:18px; color:var(--text); display:flex; align-items:center; gap:9px; }
@@ -1051,8 +1062,21 @@
 <!-- ===== /HERO BANNER ===== -->
 <div id="host-bar"></div>
 
+<!-- ===== Home (초기 화면) ===== -->
+<div class="container" id="home-view">
+  <button class="home-nav-btn nav-gold" onclick="goLobby()">
+    게임 기록 <span>— 지난 정산 목록 보기 · 새 게임 시작</span>
+  </button>
+  <a href="/pushfold-chart.html" class="home-nav-btn nav-dark">
+    Push/Fold 차트 <span>— 내 스택·포지션별 올인 or 콜 레인지</span>
+  </a>
+</div>
+
 <!-- ===== Lobby (리스트 화면) ===== -->
 <div class="container" id="lobby-view">
+  <div class="detail-topbar">
+    <button class="back-btn" onclick="goHome()">← 홈</button>
+  </div>
   <div class="lobby-head">
     <div class="lobby-title">게임 기록</div>
     <span class="lobby-count" id="lobby-count">총 0회</span>
@@ -1061,15 +1085,6 @@
   <button class="lobby-new-game" id="lobby-new-game" onclick="createGame()" style="display:none">+ 새 게임</button>
 </div>
 
- <!-- ===== Push/Fold Chart Button ===== -->
-<a href="/pushfold-chart.html" style="
-  display:block; width:100%; text-align:center; margin:10px 0;
-  padding:13px 20px; border-radius:14px; text-decoration:none;
-  box-sizing:border-box;
-  background:#1F3A5F; color:#fff; font-weight:700; font-size:14px;">
-  Push/Fold 차트 <span style="color:#fff;">— 내 스택·포지션별 올인 or 콜 레인지</span>
-</a>
- 
 <!-- ===== Detail (상세 화면) ===== -->
 <div class="container" id="detail-view">
 
@@ -1252,9 +1267,9 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 const HOST_EMAIL = "iamrlgns@gmail.com"; // 이 계정만 수정 가능(방장)
 
-// 라우팅: ?room=YYYY-MM-DD → 상세 / 그 외(?lobby, 파라미터 없음) → 리스트
+// 라우팅: ?room=YYYY-MM-DD → 상세 / ?lobby → 리스트 / 파라미터 없음 → 홈
 let roomId = new URLSearchParams(location.search).get('room'); // 날짜(doc ID)
-let viewMode = roomId ? 'detail' : 'lobby';
+let viewMode = roomId ? 'detail' : (new URLSearchParams(location.search).has('lobby') ? 'lobby' : 'home');
 let currentUser = null, roomHostUid = null, isHost = false;
 let applyingRemote = false; // 원격 반영 중 재저장 방지
 
@@ -1344,6 +1359,7 @@ async function createGame() {
 
 // 리스트 화면으로 이동
 function goLobby() { location.search = '?lobby'; }
+function goHome() { location.href = location.pathname; }
 // 특정 날짜 방으로 진입
 function enterRoom(id) { location.search = '?room=' + id; }
 
@@ -2354,7 +2370,7 @@ document.getElementById('reset-modal').addEventListener('click', e => {
 function boot() {
   if (viewMode === 'detail') {
     document.body.classList.add('detail-mode');
-    document.body.classList.remove('lobby-mode');
+    document.body.classList.remove('lobby-mode', 'home-mode');
     load();
     // 캐시가 다른 날짜의 것이면 무시하고 새로 시작 (스냅샷이 곧 덮어씀). playerHistory는 보존.
     if (state.date !== roomId) {
@@ -2369,14 +2385,13 @@ function boot() {
     state.date = roomId;
     render();
     subscribeRoom(); // 방이 있으면 원격 구독 → 곧 최신본으로 교체
-  } else {
+  } else if (viewMode === 'lobby') {
     document.body.classList.add('lobby-mode');
-    document.body.classList.remove('detail-mode');
-    // URL 정규화 (파라미터 없이 들어오면 ?lobby로)
-    if (!new URLSearchParams(location.search).has('lobby')) {
-      history.replaceState(null, '', '?lobby');
-    }
+    document.body.classList.remove('detail-mode', 'home-mode');
     renderLobby();
+  } else {
+    document.body.classList.add('home-mode');
+    document.body.classList.remove('lobby-mode', 'detail-mode');
   }
 }
 
