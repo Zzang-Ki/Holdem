@@ -943,9 +943,10 @@
 
   /* ===== HERO BANNER ===== */
   .hero-banner{
-    --logo-gap: 12px;            /* 로고 ↔ 타이틀 간격 (기본 24px의 50%) */
-    margin: -30px -20px 28px;    /* body 패딩(30/20) 상쇄 → 풀 와이드 */
-    padding: 48px 20px 44px;
+    --logo-gap: 9px;             /* 로고 ↔ 워드마크 간격 */
+    position: relative;          /* 유저영역(#host-bar) 우측 상단 기준점 */
+    margin: -30px -20px 20px;    /* body 패딩(30/20) 상쇄 → 풀 와이드 */
+    padding: 28px 20px 24px;
     background:
       radial-gradient(circle at 50% -30%, rgba(37,99,201,.12) 0%, transparent 62%),
       linear-gradient(160deg, #E8F0FB 0%, #F4F6FA 100%);
@@ -957,22 +958,26 @@
     display:flex; flex-direction:column; align-items:center;
     gap: var(--logo-gap);
   }
-  .hero-banner .hm-spade{ width:88px; height:88px; display:block; }
-  .hero-banner .hm-wordmark{ width:min(330px,74vw); height:auto; display:block; }
+  .hero-banner .hm-spade{ width:58px; height:58px; display:block; }
+  .hero-banner .hm-wordmark{ width:min(240px,58vw); height:auto; display:block; }
   @media (max-width:600px){
-    .hero-banner{ margin:-16px -12px 20px; padding:36px 16px 32px; }
-    .hero-banner .hm-spade{ width:66px; height:66px; }
+    .hero-banner{ margin:-16px -12px 16px; padding:22px 16px 18px; }
+    .hero-banner .hm-spade{ width:46px; height:46px; }
+    .hero-banner .hm-wordmark{ width:min(200px,54vw); }
   }
   /* ===== /HERO BANNER ===== */
 
   /* ===== 공유/권한 ===== */
-  #host-bar { text-align:center; margin:-12px 0 18px; font-size:13px; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  /* 유저영역: 히어로 중앙 → 우측 상단 */
+  #host-bar { position:absolute; top:10px; right:14px; z-index:2; font-size:13px; display:flex; gap:8px; align-items:center; }
   #host-bar .host-tag { color:var(--text-dim); font-weight:600; }
-  #host-bar button { padding:7px 14px; border-radius:9px; border:1px solid var(--border); background:var(--bg-card); color:var(--text); font-weight:600; cursor:pointer; }
+  #host-bar button { padding:5px 11px; border-radius:9px; border:1px solid var(--border); background:var(--bg-card); color:var(--text); font-size:12px; font-weight:600; cursor:pointer; }
   #host-bar button:hover { background:var(--bg-elev); }
-  #host-bar.viewer { margin:-6px 0 10px; }
   #host-bar .host-login-link { color:var(--text-dim); font-size:12px; opacity:.55; cursor:pointer; text-decoration:underline; }
   #host-bar .host-login-link:hover { opacity:1; }
+  @media (max-width:600px){
+    #host-bar { top:8px; right:10px; font-size:12px; }
+  }
   body.view-only .toolbar-fixed { display:none !important; }    /* GNB(하단 툴바) 제거 */
   body.view-only .btn-share-session { display:none !important; } /* 세션별 공유 버튼 제거 */
   body.view-only .btn-gold,
@@ -997,10 +1002,30 @@
   body.detail-mode #home-view,
   body.detail-mode #lobby-view { display:none !important; }
 
-  .home-nav-btn{ display:block; width:100%; text-align:center; margin:10px 0; padding:13px 20px; border-radius:14px; border:none; cursor:pointer; box-sizing:border-box; text-decoration:none; font-family:'Noto Sans KR',sans-serif; font-size:14px; font-weight:700; color:#fff; }
-  .home-nav-btn.nav-gold{ background:var(--gold); }
-  .home-nav-btn.nav-gold:hover{ background:var(--gold-soft); }
-  .home-nav-btn.nav-dark{ background:#1F3A5F; }
+  /* ===== Home 진입점 카드 그리드 ===== */
+  /* 2열 고정 — 카드가 홀수면 마지막 칸은 빈 칸으로 남고 폭을 늘리지 않는다 */
+  .home-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; align-items:stretch; }
+  .home-card{
+    display:flex; flex-direction:column; align-items:flex-start; gap:9px;
+    background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding:15px 14px 16px; text-decoration:none; color:var(--text);
+    cursor:pointer; text-align:left; font-family:'Noto Sans KR',sans-serif;
+    transition:border-color .15s, transform .05s, box-shadow .15s;
+  }
+  .home-card:hover{ border-color:var(--gold-soft); box-shadow:0 4px 16px rgba(43,43,40,.06); }
+  .home-card:active{ transform:scale(.99); }
+  .home-card .hc-icon{
+    width:36px; height:36px; border-radius:11px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .home-card .hc-icon svg{ width:19px; height:19px; display:block; }
+  .home-card .hc-title{ font-size:14px; font-weight:700; line-height:1.3; }
+  .home-card .hc-desc{ font-size:12px; font-weight:400; color:var(--text-dim); line-height:1.45; }
+  @media (max-width:400px){
+    .home-grid{ gap:10px; }
+    .home-card{ padding:13px 12px 14px; }
+    .home-card .hc-desc{ font-size:11px; }
+  }
 
   .lobby-head{ display:flex; align-items:center; justify-content:space-between; margin:6px 4px 14px; }
   .lobby-title{ font-family:'Montserrat','Noto Sans KR',sans-serif; font-weight:700; font-size:18px; color:var(--text); display:flex; align-items:center; gap:9px; }
@@ -1048,6 +1073,7 @@
 <body>
 <!-- ===== HERO BANNER (HoldemMates) ===== -->
 <div class="hero-banner">
+  <div id="host-bar"></div>
   <div class="hero-logo">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="hm-spade" aria-hidden="true">
 <defs><clipPath id="hsp"><path d="M50,8 C50,8 20,38 12,52 C4,66 8,82 24,82 C36,82 44,74 48,66 C47,76 44,84 42,90 L58,90 C56,84 53,76 52,66 C56,74 64,82 76,82 C92,82 96,66 88,52 C80,38 50,8 50,8 Z"/></clipPath></defs>
@@ -1060,16 +1086,10 @@
   </div>
 </div>
 <!-- ===== /HERO BANNER ===== -->
-<div id="host-bar"></div>
 
 <!-- ===== Home (초기 화면) ===== -->
 <div class="container" id="home-view">
-  <button class="home-nav-btn nav-gold" onclick="goLobby()">
-    게임 기록 <span>— 지난 정산 목록 보기 · 새 게임 시작</span>
-  </button>
-  <a href="/pushfold-chart.html" class="home-nav-btn nav-dark">
-    Push/Fold 차트 <span>— 내 스택·포지션별 올인 or 콜 레인지</span>
-  </a>
+  <div class="home-grid" id="home-grid"></div>
 </div>
 
 <!-- ===== Lobby (리스트 화면) ===== -->
@@ -1298,11 +1318,11 @@ function applyPermissionUI() {
   if (!bar) return;
   if (isHost) {
     bar.classList.remove('viewer');
-    bar.innerHTML = '<span class="host-tag">\u2660 \ubc29\uc7a5</span> ' +
+    bar.innerHTML = '<span class="host-tag">\u2660 \ub9c8\uc2a4\ud130</span> ' +
                     '<button onclick="hostLogout()">\ub85c\uadf8\uc544\uc6c3</button>';
   } else {
     bar.classList.add('viewer');
-    bar.innerHTML = '<a class="host-login-link" onclick="hostLogin()">\ubc29\uc7a5 \ub85c\uadf8\uc778</a>';
+    bar.innerHTML = '<a class="host-login-link" onclick="hostLogin()">\ub9c8\uc2a4\ud130 \ub85c\uadf8\uc778</a>';
   }
 }
 
@@ -1330,7 +1350,7 @@ async function createGame() {
     catch (e) { alert('로그인 실패: ' + e.message); return; }
   }
   if (auth.currentUser.email !== HOST_EMAIL) {
-    alert('\ubc29\uc7a5 \uacc4\uc815(' + HOST_EMAIL + ')\ub9cc \uc0c8 \uac8c\uc784\uc744 \ub9cc\ub4e4 \uc218 \uc788\uc5b4\uc694.');
+    alert('\ub9c8\uc2a4\ud130 \uacc4\uc815(' + HOST_EMAIL + ')\ub9cc \uc0c8 \uac8c\uc784\uc744 \ub9cc\ub4e4 \uc218 \uc788\uc5b4\uc694.');
     return;
   }
   const today = todayLocal();
@@ -1357,6 +1377,37 @@ async function createGame() {
   }
 }
 
+// ===== 홈 진입점 =====
+// 항목을 늘리려면 이 배열에 한 줄만 추가하면 된다. category는 구조에만 두고 이번 버전 UI에서는 쓰지 않는다.
+const HOME_ENTRIES = [
+  {
+    id: 'games', title: '게임 기록', desc: '지난 정산 목록 · 새 게임 시작',
+    href: '?lobby', color: 'var(--gold)', category: null,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>'
+  },
+  {
+    id: 'pushfold', title: 'Push/Fold 차트', desc: '스택·포지션별 올인/콜 레인지',
+    href: '/pushfold-chart.html', color: '#1F3A5F', category: null,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>'
+  },
+  {
+    id: 'handranking', title: 'Hand Ranking', desc: '169개 스타팅 핸드 세기 순서',
+    href: '/hand-ranking.html', color: 'var(--felt)', category: null,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V10M12 21V4M19 21v-7"/></svg>'
+  }
+];
+
+function renderHome() {
+  const el = document.getElementById('home-grid');
+  if (!el) return;
+  el.innerHTML = HOME_ENTRIES.map(e => `
+    <a class="home-card" href="${e.href}" data-id="${e.id}">
+      <span class="hc-icon" style="background:${e.color}">${e.icon}</span>
+      <span class="hc-title">${e.title}</span>
+      <span class="hc-desc">${e.desc}</span>
+    </a>`).join('');
+}
+
 // 리스트 화면으로 이동
 function goLobby() { location.search = '?lobby'; }
 function goHome() { location.href = location.pathname; }
@@ -1379,8 +1430,8 @@ async function onDateInputChange() {
   const newDate = input.value;
   input.style.display = 'none';
   if (!newDate || newDate === roomId) return;
-  if (!isHost) { alert('방장만 날짜를 변경할 수 있어요.'); return; }
-  if (!auth.currentUser) { alert('로그인이 필요해요. 방장 로그인 후 다시 시도해주세요.'); return; }
+  if (!isHost) { alert('마스터만 날짜를 변경할 수 있어요.'); return; }
+  if (!auth.currentUser) { alert('로그인이 필요해요. 마스터 로그인 후 다시 시도해주세요.'); return; }
 
   // 1) 충돌 확인 (대상 날짜에 이미 기록이 있으면 차단)
   let target;
@@ -1424,7 +1475,7 @@ async function onDateInputChange() {
 
 // ===== 게임(방) 단위 삭제 (방장 전용) =====
 async function deleteGame(id, fromLobby) {
-  if (!isHost) { alert('방장만 삭제할 수 있어요.'); return; }
+  if (!isHost) { alert('마스터만 삭제할 수 있어요.'); return; }
   if (!id) return;
   if (!confirm(formatDateKor(id) + ' 기록을 삭제할까요?\n이 동작은 되돌릴 수 없어요.')) return;
   try {
@@ -2392,6 +2443,7 @@ function boot() {
   } else {
     document.body.classList.add('home-mode');
     document.body.classList.remove('lobby-mode', 'detail-mode');
+    renderHome();
   }
 }
 

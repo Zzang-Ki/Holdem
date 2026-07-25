@@ -79,6 +79,7 @@
   .dot{width:11px; height:11px; border-radius:3px; display:inline-block; vertical-align:-1px; margin-right:4px;}
 
   .note{font-size:11px; color:var(--ink-soft); line-height:1.6; margin-top:4px; padding:0 4px;}
+  .xlink{display:block; text-align:center; margin-top:14px; font-size:12px; color:var(--teal-dark); font-weight:600; text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -144,6 +145,8 @@
     Call은 상대의 first-in 올인을 내가 받는 상황 기준이에요. ICM(상금 구조)·상대 성향은 미반영 —
     특히 "절박하지 않은 초보의 자발적 올인"은 레인지가 프리미엄에 몰려 있으니 Call 차트보다 훨씬 타이트하게 받으세요.
   </div>
+
+  <a class="xlink" href="/hand-ranking.html">→ Hand Ranking(핸드 세기 순서)으로 이동</a>
 </div>
 
 <script>
@@ -158,6 +161,10 @@ const ALL = [];
 for(let r=0;r<13;r++) for(let c=0;c<13;c++) ALL.push(handName(r,c));
 const ALL_SET = new Set(ALL);
 
+/* SOURCE OF TRUTH: 핸드 순서 배열 — 두 파일 동일하게 유지 */
+/* 아래 RAW_ORDER → (중복 제거 + 누락 보충) → ORDER 가 원본이며,
+   hand-ranking.html 이 그 최종 169개 배열을 그대로 복제해 쓰고 있음.
+   순서를 바꾸면 hand-ranking.html 의 ORDER 도 함께 갱신할 것. */
 /* 근사 Nash 푸시 우선순위 (앞일수록 먼저 올인 레인지에 포함) */
 const RAW_ORDER = `
 AA KK QQ JJ AKs AKo TT AQs 99 AJs AQo KQs 88 ATs AJo KJs 77 A9s KTs QJs
@@ -176,6 +183,7 @@ T2o 62o 42o 82o 83o 32o 72o
 const seen = new Set(), ORDER = [];
 for(const h of RAW_ORDER){ if(ALL_SET.has(h) && !seen.has(h)){ seen.add(h); ORDER.push(h); } }
 for(const h of ALL){ if(!seen.has(h)) ORDER.push(h); }
+/* /SOURCE OF TRUTH */
 
 function combosOf(h){ return h.length===2 ? 6 : (h[2]==='s' ? 4 : 12); }
 const ORDER_INDEX = {}; ORDER.forEach((h,i)=>ORDER_INDEX[h]=i);

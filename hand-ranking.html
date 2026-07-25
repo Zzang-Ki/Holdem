@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hand Ranking — HoldemMates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1F3A5F; --navy-deep:#16294a;
+    --teal:#14919B; --teal-dark:#0B6E77; --teal-soft:#E3F4F5;
+    --green:#14A06A; --green-dark:#0C7A4F; --green-soft:#E4F5EE;
+    --cream:#FBF8F1; --card:#FFFFFF;
+    --ink:#2B3442; --ink-soft:#6B7686;
+    --line:#E5E1D6;
+    --radius:14px;
+    /* 레어리티 6색 — 격자 내부 / 범례 / 등급 배지에만 사용 */
+    --t0:#E53E3E; --t1:#F97316; --t2:#A855F7; --t3:#3B82F6; --t4:#10B981; --t5:#9CA3AF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    padding:16px 12px 40px; display:flex; justify-content:center;
+  }
+  .wrap{width:100%; max-width:560px;}
+
+  header{margin:6px 2px 16px;}
+  .logo{font-family:'Poppins',sans-serif; font-weight:700; font-size:17px; color:var(--navy); letter-spacing:-.02em; text-align:left; text-decoration:none; display:inline-flex; align-items:center; gap:6px;}
+  .logo .back{font-size:18px; line-height:1; color:var(--navy);}
+  .logo b{color:var(--teal);}
+  .title{font-family:'Poppins',sans-serif; font-weight:700; font-size:24px; color:var(--navy); letter-spacing:-.01em; text-align:center; margin-top:10px;}
+  .t-hand{color:var(--teal);}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(31,58,95,.05);}
+
+  .row{margin-bottom:16px;}
+  .row:last-child{margin-bottom:0;}
+  .label{font-size:14px; font-weight:700; color:var(--navy); letter-spacing:.06em; margin-bottom:6px;}
+  .hint{font-size:11px; color:var(--ink-soft); margin-top:7px; line-height:1.5;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink);
+    border-radius:999px; padding:7px 13px; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .12s; user-select:none;
+  }
+  .chip.on{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .chip:active{transform:scale(.95);}
+
+  .stats{display:flex; align-items:center; gap:14px; padding:10px 4px 2px;}
+  .stat-main{font-family:'Poppins',sans-serif; font-weight:700; font-size:34px; color:var(--teal-dark); line-height:1;}
+  .stat-main small{font-size:16px;}
+  .stat-side{font-size:12px; color:var(--ink-soft); line-height:1.5;}
+  .stat-side b{color:var(--navy);}
+
+  .grid{
+    display:grid; grid-template-columns:repeat(13,1fr); gap:2px;
+    margin-top:10px;
+  }
+  .cell{
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-size:clamp(7px,2.3vw,11px); font-weight:600; border-radius:4px;
+    color:#fff; cursor:pointer; transition:filter .1s;
+  }
+  /* 일반(Common)은 흰 글자 대비가 부족 → 진한 잉크색 사용 */
+  .cell.ink{color:var(--ink);}
+  /* 상위 % 하이라이트: 배경색을 덮지 않고 굵은 테두리만 겹쳐 그림 */
+  .cell.hl{outline:2.5px solid var(--navy); outline-offset:-2.5px;}
+  .cell.sel{filter:brightness(.78);}
+
+  .info{
+    margin-top:10px; min-height:20px; font-size:13px; color:var(--ink);
+    background:var(--teal-soft); border-radius:8px; padding:10px 12px; display:none; line-height:1.7;
+  }
+  .info.show{display:block;}
+  .info b{color:var(--teal-dark);}
+  .info .badge{display:inline-block; color:#fff; border-radius:6px; padding:1px 8px; font-size:11px; font-weight:700; vertical-align:1px;}
+  .info .cmt{display:block; margin-top:4px; font-size:12px; color:var(--ink-soft);}
+
+  .legend{display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:10px; font-size:11px; color:var(--ink-soft); align-items:center;}
+  .dot{width:11px; height:11px; border-radius:3px; display:inline-block; vertical-align:-1px; margin-right:4px;}
+
+  .note{font-size:11px; color:var(--ink-soft); line-height:1.6; margin-top:4px; padding:0 4px;}
+  .xlink{display:block; text-align:center; margin-top:14px; font-size:12px; color:var(--teal-dark); font-weight:600; text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="/"><span class="back">&lt;</span> Holdem<b>Mates</b></a>
+    <div class="title">Hand <span class="t-hand">Ranking</span></div>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <div class="label">표시 기준</div>
+      <div class="chips" id="modes"></div>
+      <div class="hint" id="modeHint"></div>
+    </div>
+    <div class="row">
+      <div class="label">상위 % 하이라이트</div>
+      <div class="chips" id="highlights"></div>
+      <div class="hint">선택한 구간을 굵은 테두리로 묶어서 보여줘요. 등급 색은 그대로 유지돼요.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stats">
+      <div class="stat-main" id="statMain">169<small>핸드</small></div>
+      <div class="stat-side" id="statSide"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="info" id="info"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="note">
+    ⚠️ 이 표는 핸드 자체의 세기 순서예요. 실제로 올인할지 말지는 스택·인원·포지션에 따라 달라지니
+    Push/Fold 차트를 함께 보세요.<br>
+    순위는 Push/Fold 차트와 <b>완전히 동일한 핸드 순서 배열</b>을 씁니다. 두 페이지에서 같은 핸드의 순위는 항상 일치해요.
+  </div>
+
+  <a class="xlink" href="/pushfold-chart.html">→ Push/Fold 차트로 이동</a>
+</div>
+
+<script>
+const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+
+/* 전 핸드 169개 생성 (그리드 좌표 포함) */
+function handName(r,c){
+  if(r===c) return RANKS[r]+RANKS[c];
+  return r<c ? RANKS[r]+RANKS[c]+'s' : RANKS[c]+RANKS[r]+'o';
+}
+
+/* SOURCE OF TRUTH: 핸드 순서 배열 — 두 파일 동일하게 유지 */
+/* pushfold-chart.html 의 최종 ORDER(중복 제거·누락 보충 완료, 169개)를 그대로 복제한 것.
+   순위 기준을 두 페이지가 공유하기 위한 것이므로 한쪽만 고치지 말 것. */
+const ORDER = [
+  'AA','KK','QQ','JJ','AKs','AKo','TT','AQs','99','AJs',
+  'AQo','KQs','88','ATs','AJo','KJs','77','A9s','KTs','QJs',
+  'ATo','KQo','66','A8s','QTs','A5s','K9s','JTs','A7s','A4s',
+  '55','A9o','A6s','A3s','KJo','Q9s','A2s','J9s','T9s','44',
+  'A8o','K8s','KTo','QJo','K7s','A7o','Q8s','33','K6s','J8s',
+  'T8s','98s','A5o','K5s','QTo','A6o','22','K4s','Q7s','A4o',
+  'K9o','J7s','T7s','97s','87s','K3s','Q6s','A3o','K2s','Q5s',
+  'JTo','76s','86s','96s','A2o','Q4s','J6s','T6s','65s','K8o',
+  'Q9o','J9o','T9o','Q3s','J5s','75s','54s','95s','Q2s','K7o',
+  'J4s','85s','64s','T5s','J8o','T8o','98o','K6o','J3s','T4s',
+  '53s','94s','74s','J2s','Q8o','K5o','63s','T3s','84s','43s',
+  '93s','T2s','52s','K4o','Q7o','73s','J7o','T7o','97o','87o',
+  '92s','62s','42s','82s','K3o','Q6o','83s','32s','72s','K2o',
+  'Q5o','76o','86o','96o','Q4o','J6o','T6o','65o','75o','54o',
+  '95o','Q3o','J5o','85o','64o','T5o','Q2o','J4o','53o','94o',
+  '74o','J3o','T4o','63o','84o','43o','93o','T3o','J2o','52o',
+  '73o','92o','T2o','62o','42o','82o','83o','32o','72o'
+];
+/* /SOURCE OF TRUTH */
+
+const TOTAL_COMBOS = 1326;
+function combosOf(h){ return h.length===2 ? 6 : (h[2]==='s' ? 4 : 12); }
+
+const ORDER_INDEX = {}; ORDER.forEach((h,i)=>ORDER_INDEX[h]=i);
+/* 누적 콤보: CUM_BEFORE[h] = 이 핸드 앞까지의 누적, CUM[h] = 이 핸드까지의 누적 */
+const CUM = {}, CUM_BEFORE = {};
+(function(){ let c=0; for(const h of ORDER){ CUM_BEFORE[h]=c; c+=combosOf(h); CUM[h]=c; } })();
+
+/* 상위 % = 해당 핸드까지의 누적 콤보 ÷ 1,326 */
+function topPct(h){ return CUM[h]/TOTAL_COMBOS*100; }
+function fmtPct(p){ return p.toFixed(1); }
+
+/* 상위 N% 레인지: Push/Fold 차트의 pushSet 계산과 동일한 방식(누적 콤보 기준) */
+function rangeUpTo(pct){
+  const target = pct/100*TOTAL_COMBOS;
+  const set = new Set(); let cum=0;
+  for(const h of ORDER){
+    if(cum>=target) break;
+    set.add(h); cum+=combosOf(h);
+  }
+  return {set, combos:cum};
+}
+
+/* 등급 경계 — 이 배열 한 줄만 고치면 색칠·범례·정보가 함께 갱신됨 */
+const TIER_BOUNDS = [3, 8, 15, 30, 50, 100];
+const TIERS = [
+  {ko:'신화', en:'Mythic',   color:'var(--t0)', hex:'#E53E3E', ink:false, cmt:'이 핸드에 내 칩 모두하고 내 손모가지를 건다'},
+  {ko:'전설', en:'Legendary',color:'var(--t1)', hex:'#F97316', ink:false, cmt:'묻고 더블로 가!'},
+  {ko:'영웅', en:'Epic',     color:'var(--t2)', hex:'#A855F7', ink:false, cmt:'끝까지 가면 내가 다 이겨'},
+  {ko:'희귀', en:'Rare',     color:'var(--t3)', hex:'#3B82F6', ink:false, cmt:'"이 정도면 나쁘지 않은데?" 하고 들어갔다가 칩 녹는 핸드'},
+  {ko:'고급', en:'Uncommon', color:'var(--t4)', hex:'#10B981', ink:false, cmt:'쌀 때 플랍까지만 보는 핸드'},
+  {ko:'일반', en:'Common',   color:'var(--t5)', hex:'#9CA3AF', ink:true,  cmt:'묻지도 따지지도 말고 Fold'}
+];
+
+/* 등급 판정: 경계선을 넘기 직전까지의 핸드가 그 등급 (상위 N% 레인지와 동일한 기준) */
+const TIER_SETS = TIER_BOUNDS.map(b => rangeUpTo(b).set);
+function tierOf(h){
+  for(let i=0;i<TIER_SETS.length;i++) if(TIER_SETS[i].has(h)) return i;
+  return TIER_SETS.length-1;
+}
+function tierRangeText(i){
+  return (i===0 ? '~' : TIER_BOUNDS[i-1]+'~') + TIER_BOUNDS[i] + '%';
+}
+
+/* 백분위 농도: --teal 단색 농도 그라데이션 */
+function densityStyle(h){
+  const t = 1 - topPct(h)/100;               // 1 = 최상위, 0 = 최하위
+  const a = 0.08 + 0.92*Math.pow(t, 1.15);
+  return {bg:`rgba(20,145,155,${a.toFixed(3)})`, ink:a < 0.5};
+}
+
+/* 상태 */
+const S = { view:'tier', hl:null, sel:null };
+
+const VIEWS = [{v:'tier',t:'등급 6색'},{v:'density',t:'백분위 농도'}];
+const HLS = [5,10,15,20,30];
+
+function buildChips(el, items, cur, onPick){
+  el.innerHTML='';
+  items.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='chip'+(it.v===cur?' on':'');
+    d.textContent=it.t;
+    d.onclick=()=>{ onPick(it.v); render(); };
+    el.appendChild(d);
+  });
+}
+
+function render(){
+  buildChips(document.getElementById('modes'), VIEWS, S.view, v=>S.view=v);
+  buildChips(document.getElementById('highlights'),
+    HLS.map(n=>({v:n,t:'상위 '+n+'%'})).concat([{v:null,t:'끄기'}]),
+    S.hl, v=>S.hl=v);
+
+  document.getElementById('modeHint').textContent = S.view==='tier'
+    ? '169개 핸드를 상위 % 기준 6단계 등급 색으로 칠해요.'
+    : '같은 순서를 단색 농도로 칠해요. 진할수록 상위 핸드예요.';
+
+  /* 하이라이트 레인지 */
+  const hlRange = S.hl ? rangeUpTo(S.hl) : null;
+
+  /* 상단 수치 */
+  const main=document.getElementById('statMain'), side=document.getElementById('statSide');
+  if(hlRange){
+    main.innerHTML = '상위 '+S.hl+'<small>%</small>';
+    side.innerHTML = `<b>${hlRange.set.size}</b>핸드 · ${hlRange.combos.toLocaleString()}콤보 / ${TOTAL_COMBOS.toLocaleString()}`;
+  } else {
+    main.innerHTML = '169<small>핸드</small>';
+    side.innerHTML = `전체 스타팅 핸드<br>${TOTAL_COMBOS.toLocaleString()}콤보 / ${TOTAL_COMBOS.toLocaleString()}`;
+  }
+
+  /* 그리드 */
+  const g=document.getElementById('grid'); g.innerHTML='';
+  for(let r=0;r<13;r++) for(let c=0;c<13;c++){
+    const h=handName(r,c);
+    const d=document.createElement('div');
+    let useInk;
+    if(S.view==='tier'){
+      const ti=tierOf(h);
+      d.style.background = TIERS[ti].color;
+      useInk = TIERS[ti].ink;
+    } else {
+      const ds=densityStyle(h);
+      d.style.background = ds.bg;
+      useInk = ds.ink;
+    }
+    d.className='cell'
+      + (useInk?' ink':'')
+      + (hlRange && hlRange.set.has(h) ? ' hl':'')
+      + (S.sel===h ? ' sel':'');
+    d.textContent=h;
+    d.onclick=()=>{ S.sel = (S.sel===h ? null : h); render(); };
+    g.appendChild(d);
+  }
+
+  /* 범례 — 6등급 색 + 상위 % 구간 */
+  const lg=document.getElementById('legend');
+  lg.innerHTML = TIERS.map((t,i)=>
+    `<span><span class="dot" style="background:${t.color}"></span>${t.ko} (${t.en}) ${tierRangeText(i)}</span>`
+  ).join('') + '<span><span class="dot" style="background:#fff;border:2.5px solid var(--navy)"></span>하이라이트 구간</span>';
+
+  /* 선택 핸드 정보 */
+  const info=document.getElementById('info');
+  if(S.sel){
+    const h=S.sel, ti=tierOf(h), t=TIERS[ti];
+    info.className='info show';
+    info.innerHTML =
+      `<b>${h}</b> <span class="badge" style="background:${t.color}${t.ink?';color:var(--ink)':''}">${t.ko} (${t.en})</span><br>` +
+      `169개 중 <b>${ORDER_INDEX[h]+1}위</b> · 상위 <b>${fmtPct(topPct(h))}%</b> · ${combosOf(h)}콤보` +
+      `<span class="cmt">${t.cmt}</span>`;
+  } else {
+    info.className='info';
+  }
+}
+render();
+</script>
+</body>
+</html>
