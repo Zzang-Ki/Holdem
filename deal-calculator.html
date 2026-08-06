@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#EAF1FC">
+<title>딜 계산기 - Holdem Mates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f6fa;
+    --bg-card: #ffffff;
+    --bg-elev: #eef2f9;
+    --felt: #1f6b4a;
+    --gold: #2563c9;
+    --gold-soft: #4f86e0;
+    --red: #d63a4a;
+    --green: #14a06a;
+    --text: #1e2433;
+    --text-dim: #8089a0;
+    --border: #d4dcea;
+    --deal: #a5540d;
+  }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 5%, rgba(37, 99, 201, 0.06) 0%, transparent 35%),
+      radial-gradient(circle at 85% 90%, rgba(37, 99, 201, 0.05) 0%, transparent 45%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 14px 40px;
+    font-size: 14px;
+  }
+  .container { max-width: 560px; margin: 0 auto; }
+
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--text);
+    text-decoration: none; cursor: pointer;
+  }
+  .back-btn:hover { border-color: var(--gold-soft); color: var(--gold); }
+  .page-title { font-family: 'Montserrat', 'Noto Sans KR', sans-serif; font-weight: 700; font-size: 18px; }
+
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .section-label { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 10px; letter-spacing: .02em; }
+
+  .mode-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+  .mode-btn {
+    flex: 1; padding: 12px 8px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--bg-elev); color: var(--text-dim); font-weight: 700; font-size: 14px;
+    cursor: pointer; text-align: center; transition: all .12s;
+  }
+  .mode-btn.active { background: var(--deal); color: #fff; border-color: var(--deal); }
+
+  .hint-box {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 14px;
+  }
+
+  .stepper-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper button {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-elev); color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer;
+  }
+  .stepper button:disabled { opacity: .4; cursor: not-allowed; }
+  .stepper button:hover:not(:disabled) { border-color: var(--gold-soft); color: var(--gold); }
+  .stepper-value { font-weight: 700; font-size: 15px; min-width: 44px; text-align: center; }
+
+  .prize-field { margin-bottom: 10px; }
+  .prize-field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 5px; }
+  .prize-input-wrap { position: relative; display: flex; align-items: center; }
+  .prize-input-wrap input {
+    width: 100%; padding: 10px 46px 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+    font-size: 15px; font-weight: 600; color: var(--text); background: #fff;
+  }
+  .prize-input-wrap input:focus { outline: none; border-color: var(--gold-soft); }
+  .prize-input-wrap .unit-label {
+    position: absolute; right: 12px; font-size: 12px; color: var(--text-dim); font-weight: 600;
+  }
+  .prize-sum { font-size: 13px; font-weight: 700; color: var(--deal); margin-top: 6px; }
+  .prize-warning { font-size: 12px; color: var(--red); margin-top: 6px; font-weight: 600; }
+
+  .player-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .player-row input[type=text] {
+    flex: 0 0 78px; padding: 10px 10px; border-radius: 10px; border: 1px solid var(--border);
+    font-size: 13px; color: var(--text); background: #fff;
+  }
+  .player-row input[type=text]::placeholder { color: var(--text-dim); }
+  .player-row .chips-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+  .player-row input.chips-input {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+    font-size: 15px; font-weight: 600; text-align: right; color: var(--text); background: #fff;
+  }
+  .player-row input.chips-input:focus { outline: none; border-color: var(--gold-soft); }
+  .player-row input.chips-input.invalid { border-color: var(--red); background: #fdf0f1; }
+
+  .error-box {
+    background: #fdf0f1; border: 1px solid var(--red); border-radius: 10px;
+    padding: 12px; font-size: 13px; color: var(--red); font-weight: 600; text-align: center;
+  }
+
+  table.result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.result-table th, table.result-table td { padding: 9px 6px; text-align: right; border-bottom: 1px solid var(--border); }
+  table.result-table th:first-child, table.result-table td:first-child { text-align: left; }
+  table.result-table th { color: var(--text-dim); font-size: 11px; font-weight: 700; }
+  table.result-table td.amount { font-weight: 700; color: var(--deal); font-size: 14px; }
+  table.result-table td.sub { display: block; font-size: 11px; font-weight: 400; color: var(--text-dim); }
+  table.result-table tr.total-row td { font-weight: 700; border-top: 2px solid var(--border); border-bottom: none; }
+  table.result-table tr.total-row td.amount { color: var(--text); }
+
+  .zero-notice {
+    margin-top: 10px; font-size: 12px; color: var(--text-dim); background: var(--bg-elev);
+    border-radius: 8px; padding: 8px 10px; line-height: 1.5;
+  }
+
+  @media (max-width: 380px) {
+    .player-row input[type=text] { flex-basis: 62px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <a class="back-btn" href="/">← 홈</a>
+    <span class="page-title">딜 계산기</span>
+  </div>
+
+  <div class="card">
+    <div class="mode-toggle">
+      <button type="button" class="mode-btn active" id="mode-simple-btn" onclick="setMode('simple')">간편 (총 상금)</button>
+      <button type="button" class="mode-btn" id="mode-icm-btn" onclick="setMode('icm')">정밀 (등수별 상금)</button>
+    </div>
+    <div class="hint-box" id="simple-hint">
+      등수별 상금 차이가 있다면 '정밀' 모드를 쓰세요. 칩 비율만으로 나누면 칩 리더가 과하게 가져갑니다.
+    </div>
+
+    <div class="stepper-row">
+      <div class="section-label" style="margin-bottom:0;">인원수</div>
+      <div class="stepper">
+        <button type="button" onclick="changePlayerCount(-1)">−</button>
+        <span class="stepper-value" id="player-count-value">4</span>
+        <button type="button" onclick="changePlayerCount(1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">상금</div>
+    <div id="prize-fields"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">플레이어 (이름 / 보유 칩)</div>
+    <div id="player-fields"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">결과</div>
+    <div id="result-area"></div>
+  </div>
+</div>
+
+<script>
+const PRIZE_UNIT = 10000;
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 9;
+const DEFAULT_COUNT = 4;
+const DEFAULT_SIMPLE_PRIZE = 70;
+const DEFAULT_ICM_PRIZE = [40, 20, 10];
+
+const state = {
+  mode: 'simple',
+  playerCount: DEFAULT_COUNT,
+  players: [],       // { name, chipsRaw }
+  simplePrize: null,  // 만원 단위 문자열
+  icmPrizes: []       // 만원 단위 문자열 배열
+};
+
+function initPlayers(count) {
+  for (let i = 0; i < count; i++) {
+    state.players.push({ name: '', chipsRaw: '' });
+  }
+}
+
+function initIcmPrizes(count) {
+  for (let i = 0; i < count; i++) {
+    state.icmPrizes.push(i < DEFAULT_ICM_PRIZE.length ? String(DEFAULT_ICM_PRIZE[i]) : '0');
+  }
+}
+
+function init() {
+  state.simplePrize = String(DEFAULT_SIMPLE_PRIZE);
+  initPlayers(state.playerCount);
+  initIcmPrizes(state.playerCount);
+  renderAll();
+}
+
+// ===== 모드 =====
+function setMode(mode) {
+  if (state.mode === mode) return;
+  state.mode = mode;
+  document.getElementById('mode-simple-btn').classList.toggle('active', mode === 'simple');
+  document.getElementById('mode-icm-btn').classList.toggle('active', mode === 'icm');
+  document.getElementById('simple-hint').style.display = mode === 'simple' ? '' : 'none';
+  renderPrizeFields();
+  renderResult();
+}
+
+// ===== 인원수 =====
+function changePlayerCount(delta) {
+  const next = state.playerCount + delta;
+  if (next < MIN_PLAYERS || next > MAX_PLAYERS) return;
+
+  if (delta > 0) {
+    for (let i = state.playerCount; i < next; i++) {
+      state.players.push({ name: '', chipsRaw: '' });
+      const def = i < DEFAULT_ICM_PRIZE.length ? String(DEFAULT_ICM_PRIZE[i]) : '0';
+      state.icmPrizes.push(def);
+    }
+  } else {
+    state.players.length = next;
+    state.icmPrizes.length = next;
+  }
+  state.playerCount = next;
+  renderAll();
+}
+
+// ===== 렌더링 =====
+function renderAll() {
+  document.getElementById('player-count-value').textContent = state.playerCount;
+  document.getElementById('mode-simple-btn').classList.toggle('active', state.mode === 'simple');
+  document.getElementById('mode-icm-btn').classList.toggle('active', state.mode === 'icm');
+  document.getElementById('simple-hint').style.display = state.mode === 'simple' ? '' : 'none';
+  renderPrizeFields();
+  renderPlayerFields();
+  renderResult();
+}
+
+function renderPrizeFields() {
+  const el = document.getElementById('prize-fields');
+  if (state.mode === 'simple') {
+    el.innerHTML = `
+      <div class="prize-field">
+        <label>총 상금</label>
+        <div class="prize-input-wrap">
+          <input type="text" inputmode="numeric" id="simple-prize-input" value="${escapeAttr(state.simplePrize)}" oninput="onSimplePrizeInput(this)">
+          <span class="unit-label">만원</span>
+        </div>
+      </div>`;
+  } else {
+    let rows = '';
+    for (let i = 0; i < state.playerCount; i++) {
+      rows += `
+      <div class="prize-field">
+        <label>${i + 1}등 상금</label>
+        <div class="prize-input-wrap">
+          <input type="text" inputmode="numeric" data-idx="${i}" value="${escapeAttr(state.icmPrizes[i])}" oninput="onIcmPrizeInput(this)">
+          <span class="unit-label">만원</span>
+        </div>
+      </div>`;
+    }
+    const sumManwon = icmSumManwon();
+    rows += `<div class="prize-sum">합계 ${sumManwon.toLocaleString('ko-KR')}만원 (₩${(sumManwon * PRIZE_UNIT).toLocaleString('ko-KR')})</div>`;
+    const warn = descendingWarning();
+    if (warn) rows += `<div class="prize-warning">${warn}</div>`;
+    el.innerHTML = rows;
+  }
+}
+
+function renderPlayerFields() {
+  const el = document.getElementById('player-fields');
+  let rows = '';
+  for (let i = 0; i < state.playerCount; i++) {
+    const p = state.players[i];
+    const invalid = isChipInvalid(p.chipsRaw);
+    rows += `
+    <div class="player-row">
+      <input type="text" maxlength="12" placeholder="P${i + 1}" data-idx="${i}" value="${escapeAttr(p.name)}" oninput="onNameInput(this)">
+      <div class="chips-wrap">
+        <input type="text" inputmode="numeric" class="chips-input ${invalid ? 'invalid' : ''}" data-idx="${i}" value="${escapeAttr(p.chipsRaw)}" oninput="onChipsInput(this)">
+      </div>
+    </div>`;
+  }
+  el.innerHTML = rows;
+}
+
+function escapeAttr(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+// ===== 입력 핸들러 =====
+function onSimplePrizeInput(input) {
+  const digits = input.value.replace(/[^\d]/g, '');
+  state.simplePrize = digits;
+  input.value = digits;
+  renderResult();
+}
+
+function onIcmPrizeInput(input) {
+  const idx = Number(input.dataset.idx);
+  const digits = input.value.replace(/[^\d]/g, '');
+  state.icmPrizes[idx] = digits;
+  input.value = digits;
+  renderPrizeFields();
+  // 포커스 유지
+  const focusInput = document.querySelector(`#prize-fields input[data-idx="${idx}"]`);
+  if (focusInput) { focusInput.focus(); const v = focusInput.value; focusInput.setSelectionRange(v.length, v.length); }
+  renderResult();
+}
+
+function onNameInput(input) {
+  const idx = Number(input.dataset.idx);
+  state.players[idx].name = input.value;
+  renderResult();
+}
+
+function onChipsInput(input) {
+  const idx = Number(input.dataset.idx);
+  const digits = input.value.replace(/[^\d]/g, '');
+  state.players[idx].chipsRaw = digits;
+  input.value = digits === '' ? '' : parseInt(digits, 10).toLocaleString('ko-KR');
+  input.classList.toggle('invalid', isChipInvalid(state.players[idx].chipsRaw));
+  renderResult();
+}
+
+// ===== 헬퍼 =====
+function isChipInvalid(raw) {
+  if (raw === '' || raw == null) return false; // 미입력은 별도 처리(합계로 걸러짐)
+  const n = parseInt(raw, 10);
+  return !(n > 0);
+}
+
+function icmSumManwon() {
+  return state.icmPrizes.reduce((a, v) => a + (parseInt(v, 10) || 0), 0);
+}
+
+function descendingWarning() {
+  const arr = state.icmPrizes.map(v => parseInt(v, 10) || 0);
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] > arr[i - 1]) return `${i + 1}등 상금이 ${i}등보다 큽니다`;
+  }
+  return null;
+}
+
+// ===== ICM (Malmuth-Harville) =====
+function icm(chips, prizes) {
+  const n = chips.length;
+  const equity = new Array(n).fill(0);
+  let k = 0;
+  for (let i = 0; i < prizes.length; i++) if (prizes[i] > 0) k = i + 1;
+  if (k === 0) return equity;
+
+  function recurse(remaining, remainingTotal, place, prob) {
+    for (const i of remaining) {
+      const p = prob * chips[i] / remainingTotal;
+      equity[i] += p * prizes[place];
+      if (place + 1 < k) {
+        recurse(remaining.filter(x => x !== i), remainingTotal - chips[i], place + 1, p);
+      }
+    }
+  }
+  recurse([...chips.keys()], chips.reduce((a, b) => a + b, 0), 0, 1);
+  return equity;
+}
+
+// ===== R6 최대잔여법 (만원 단위) =====
+function allocateLargestRemainder(equityWon, totalWon, chips) {
+  const n = equityWon.length;
+  const U = Math.round(totalWon / PRIZE_UNIT);
+  const units = new Array(n);
+  const remainders = new Array(n);
+  let sumUnits = 0;
+  for (let i = 0; i < n; i++) {
+    units[i] = Math.floor(equityWon[i] / PRIZE_UNIT);
+    remainders[i] = equityWon[i] - units[i] * PRIZE_UNIT;
+    sumUnits += units[i];
+  }
+  let leftover = U - sumUnits;
+  const order = [...Array(n).keys()].sort((a, b) => {
+    if (remainders[b] !== remainders[a]) return remainders[b] - remainders[a];
+    if (chips[b] !== chips[a]) return chips[b] - chips[a];
+    return a - b;
+  });
+  for (let idx = 0; idx < order.length && leftover > 0; idx++, leftover--) {
+    units[order[idx]] += 1;
+  }
+  return units.map(u => u * PRIZE_UNIT);
+}
+
+function chipRatioEquity(chips, totalWon) {
+  const totalChips = chips.reduce((a, b) => a + b, 0);
+  if (totalChips === 0) return chips.map(() => 0);
+  return chips.map(c => totalWon * c / totalChips);
+}
+
+// ===== 결과 계산 및 렌더 =====
+function renderResult() {
+  const el = document.getElementById('result-area');
+  const n = state.playerCount;
+  const chips = state.players.map(p => (p.chipsRaw === '' ? 0 : parseInt(p.chipsRaw, 10) || 0));
+  const totalChips = chips.reduce((a, b) => a + b, 0);
+
+  const anyInvalidChip = state.players.some(p => isChipInvalid(p.chipsRaw));
+  if (anyInvalidChip) {
+    el.innerHTML = `<div class="error-box">보유 칩을 올바르게 입력해주세요 (0보다 큰 정수)</div>`;
+    return;
+  }
+
+  if (totalChips === 0) {
+    el.innerHTML = `<div class="error-box">보유 칩을 입력해주세요</div>`;
+    return;
+  }
+
+  let prizeManwon;
+  let prizesWonArr; // ICM용 등수별 배열(원)
+  if (state.mode === 'simple') {
+    prizeManwon = parseInt(state.simplePrize, 10) || 0;
+  } else {
+    prizeManwon = icmSumManwon();
+    prizesWonArr = state.icmPrizes.map(v => (parseInt(v, 10) || 0) * PRIZE_UNIT);
+  }
+  const totalPrizeWon = prizeManwon * PRIZE_UNIT;
+
+  if (totalPrizeWon === 0) {
+    el.innerHTML = `<div class="error-box">상금을 입력해주세요</div>`;
+    return;
+  }
+
+  let equityWon;
+  if (state.mode === 'simple') {
+    equityWon = chipRatioEquity(chips, totalPrizeWon);
+  } else {
+    equityWon = icm(chips, prizesWonArr);
+  }
+
+  const finalWon = allocateLargestRemainder(equityWon, totalPrizeWon, chips);
+
+  let chipRatioFinalWon = null;
+  if (state.mode === 'icm') {
+    const chipEquity = chipRatioEquity(chips, totalPrizeWon);
+    chipRatioFinalWon = allocateLargestRemainder(chipEquity, totalPrizeWon, chips);
+  }
+
+  const names = state.players.map((p, i) => p.name.trim() || `P${i + 1}`);
+
+  let rows = `<table class="result-table"><thead><tr>
+    <th>플레이어</th><th>보유 칩</th><th>칩 비율</th>
+    ${state.mode === 'icm' ? '<th>칩 비율 분배</th>' : ''}
+    <th>분배액</th>
+  </tr></thead><tbody>`;
+
+  let sumFinal = 0;
+  const zeroNames = [];
+  for (let i = 0; i < n; i++) {
+    const ratio = (chips[i] / totalChips * 100).toFixed(1);
+    sumFinal += finalWon[i];
+    if (finalWon[i] === 0) zeroNames.push(names[i]);
+    rows += `<tr>
+      <td>${escapeHtml(names[i])}</td>
+      <td>${chips[i].toLocaleString('ko-KR')}</td>
+      <td>${ratio}%</td>
+      ${state.mode === 'icm' ? `<td>${(chipRatioFinalWon[i] / PRIZE_UNIT).toLocaleString('ko-KR')}만</td>` : ''}
+      <td class="amount">${(finalWon[i] / PRIZE_UNIT).toLocaleString('ko-KR')}만<span class="sub">₩${finalWon[i].toLocaleString('ko-KR')}</span></td>
+    </tr>`;
+  }
+  rows += `<tr class="total-row">
+    <td colspan="${state.mode === 'icm' ? 4 : 3}">합계</td>
+    <td class="amount">${(sumFinal / PRIZE_UNIT).toLocaleString('ko-KR')}만<span class="sub">₩${sumFinal.toLocaleString('ko-KR')}</span></td>
+  </tr>`;
+  rows += `</tbody></table>`;
+
+  if (zeroNames.length > 0) {
+    rows += `<div class="zero-notice">${zeroNames.map(nm => `${escapeHtml(nm)}님의 지분이 1만원 미만이라 0원으로 계산됐어요. 만원 단위로 나누는 특성상 발생할 수 있습니다.`).join('<br>')}</div>`;
+  }
+
+  el.innerHTML = rows;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+init();
+</script>
+</body>
+</html>
