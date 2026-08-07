@@ -1,0 +1,33 @@
+// Firestore 보안 규칙 (specs/room-lock.md R3 초안)
+//
+// ⚠️ 이 파일은 이력 관리용이다. 실제 배포는 Firebase Console에서 수동으로 한다.
+// 배포 전 Firebase Console의 Rules Playground로 검증할 것.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isMaster() {
+      return request.auth != null
+          && request.auth.token.email == 'iamrlgns@gmail.com';
+    }
+
+    // 필드가 없는 기존 문서는 잠김으로 간주
+    function isOpen() {
+      return resource.data.get('locked', true) == false;
+    }
+
+    // 마스터가 아니면 locked 값을 바꿀 수 없다
+    function lockUnchanged() {
+      return request.resource.data.get('locked', true)
+          == resource.data.get('locked', true);
+    }
+
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow create, delete: if isMaster();
+      allow update: if isMaster()
+                    || (request.auth != null && isOpen() && lockUnchanged());
+    }
+  }
+}

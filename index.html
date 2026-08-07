@@ -1048,7 +1048,11 @@
   .lobby-chevron{ color:#aab3c6; font-size:18px; line-height:1; margin-left:8px; flex:0 0 auto; }
   .lobby-del{ background:transparent; border:1px solid var(--red); color:var(--red); border-radius:7px; padding:4px 11px; font-size:11px; font-weight:700; cursor:pointer; flex:0 0 auto; text-transform:none; letter-spacing:0; }
   .lobby-del:hover{ background:var(--red); color:#fff; border-color:var(--red); }
-  body.view-only .lobby-del{ display:none !important; }
+  body.not-host .lobby-del{ display:none !important; }
+  /* 방 상태 배지 — 잠김은 조용하게, 열림은 눈에 띄게 (R4) */
+  .room-badge{ display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; border-radius:8px; padding:3px 10px; flex:0 0 auto; white-space:nowrap; }
+  .room-badge.locked{ color:var(--text-dim); background:rgba(128,137,160,.14); }
+  .room-badge.open{ color:#fff; background:var(--felt); }
   .lobby-players{ display:flex; align-items:center; gap:12px; }
   .lobby-pcount{ font-size:16px; font-weight:700; color:var(--gold); white-space:nowrap; font-variant-numeric:tabular-nums; flex:0 0 auto; }
   .lobby-names{ display:flex; flex-wrap:wrap; gap:6px; flex:1; }
@@ -1070,10 +1074,14 @@
   .date-edit-btn{ margin-left:auto; background:transparent; border:1px solid var(--border); border-radius:8px; width:34px; height:34px; padding:0; color:var(--gold); font-size:14px; cursor:pointer; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
   .date-edit-btn:hover{ border-color:var(--gold); background:var(--bg-elev); }
   .date-edit-input{ margin-left:8px; padding:9px 12px; border:1px solid var(--gold-soft); border-radius:8px; background:#fff; font-size:14px; }
-  body.view-only .date-edit-btn{ display:none !important; }
+  body.not-host .date-edit-btn{ display:none !important; }
+  /* 잠금 토글 — 중립 톤. 삭제(위험/빨강)와 시각적으로 명확히 구분 (R5) */
+  .lock-toggle-btn{ margin-left:6px; background:transparent; border:1px solid var(--gold-soft); border-radius:8px; height:34px; padding:0 12px; color:var(--gold); font-size:12px; font-weight:700; cursor:pointer; flex:0 0 auto; white-space:nowrap; }
+  .lock-toggle-btn:hover{ border-color:var(--gold); background:var(--bg-elev); }
+  body.not-host .lock-toggle-btn{ display:none !important; }
   .date-del-btn{ margin-left:6px; background:transparent; border:1px solid var(--border); border-radius:8px; width:34px; height:34px; padding:0; color:var(--red); font-size:14px; cursor:pointer; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
   .date-del-btn:hover{ border-color:var(--red); background:rgba(214,58,74,.08); }
-  body.view-only .date-del-btn{ display:none !important; }
+  body.not-host .date-del-btn{ display:none !important; }
 </style>
 </head>
 <body>
@@ -1121,7 +1129,9 @@
     <span class="d-text">—</span>
     <span class="dow">—</span>
   </span>
+  <span class="room-badge locked" id="room-lock-badge">🔒 잠김</span>
   <button class="date-edit-btn" id="date-edit-btn" onclick="openDateEdit()" title="날짜 수정">✎</button>
+  <button class="lock-toggle-btn" id="lock-toggle-btn" onclick="toggleLock()">열어주기</button>
   <button class="date-del-btn" id="date-del-btn" onclick="deleteGame(roomId, false)" title="이 게임 삭제">🗑</button>
   <input type="date" id="game-date" class="date-edit-input" style="display:none" onchange="onDateInputChange()">
 </div>
@@ -1297,6 +1307,7 @@ const HOST_EMAIL = "iamrlgns@gmail.com"; // 이 계정만 수정 가능(방장)
 let roomId = new URLSearchParams(location.search).get('room'); // 날짜(doc ID)
 let viewMode = roomId ? 'detail' : (new URLSearchParams(location.search).has('lobby') ? 'lobby' : 'home');
 let currentUser = null, roomHostUid = null, isHost = false;
+let roomLocked = true; // rooms/{id}.locked — 필드 없으면 잠김으로 간주 (R1)
 let applyingRemote = false; // 원격 반영 중 재저장 방지
 
 function roomRef() { return db.collection('rooms').doc(roomId); }
@@ -1306,7 +1317,20 @@ function hostLogin() {
 }
 function hostLogout() { auth.signOut(); }
 
-auth.onAuthStateChanged(u => { currentUser = u; recomputeRole(); });
+// 페이지 로드 시 로그인 세션 복원을 기다렸다가, 세션이 없을 때만 익명 인증을 시도한다.
+// ⚠️ auth.currentUser를 즉시 체크하면 세션 복원 전(null)에 걸려 마스터 세션을 덮어쓸 위험이 있으므로
+//    onAuthStateChanged의 "첫 콜백"에서만 판단한다 (R2, C3 회귀 방지).
+let authRestored = false;
+auth.onAuthStateChanged(u => {
+  currentUser = u;
+  recomputeRole();
+  if (!authRestored) {
+    authRestored = true;
+    if (!u) {
+      auth.signInAnonymously().catch(e => console.warn('익명 인증 실패', e));
+    }
+  }
+});
 
 function recomputeRole() {
   isHost = !!(currentUser && currentUser.email === HOST_EMAIL && currentUser.emailVerified);
@@ -1319,7 +1343,12 @@ function recomputeRole() {
 }
 
 function applyPermissionUI() {
-  document.body.classList.toggle('view-only', !isHost);
+  // 편집 가능 조건: 마스터이거나, 방이 열려 있으면(locked === false) 누구나 (R6)
+  const canEdit = isHost || roomLocked === false;
+  document.body.classList.toggle('view-only', !canEdit);
+  document.body.classList.toggle('not-host', !isHost); // 날짜수정/삭제/잠금토글 등 마스터 전용 관리 버튼은 항상 isHost 기준
+  renderLockBadge();
+  renderLockToggleBtn();
   const bar = document.getElementById('host-bar');
   if (!bar) return;
   if (isHost) {
@@ -1332,12 +1361,49 @@ function applyPermissionUI() {
   }
 }
 
+// ===== 방 잠금/열림 (room-lock) =====
+function renderLockBadge() {
+  const el = document.getElementById('room-lock-badge');
+  if (!el) return;
+  el.className = 'room-badge ' + (roomLocked ? 'locked' : 'open');
+  el.textContent = roomLocked ? '🔒 잠김' : '🔓 열림';
+}
+
+function renderLockToggleBtn() {
+  const btn = document.getElementById('lock-toggle-btn');
+  if (!btn) return;
+  btn.textContent = roomLocked ? '열어주기' : '잠그기';
+}
+
+// 마스터 전용: locked 필드만 부분 업데이트 (문서 전체 덮어쓰지 않음, R5)
+function toggleLock() {
+  if (!isHost || !roomId) return;
+  if (roomLocked) {
+    setLocked(false); // 열어주기 — 되돌리기 쉬우므로 확인창 없음
+  } else {
+    if (confirm('이 방을 잠글까요? 다른 사람은 더 이상 수정할 수 없어요.')) setLocked(true);
+  }
+}
+
+async function setLocked(value) {
+  try {
+    await roomRef().update({
+      locked: value,
+      lastEditedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    alert('잠금 상태 변경 실패: ' + e.message);
+  }
+}
+// ===== /방 잠금/열림 =====
+
 function subscribeRoom() {
   if (!roomId) return;
   roomRef().onSnapshot(snap => {
     if (!snap.exists) return;
     const data = snap.data();
     roomHostUid = data.hostUid || null;
+    roomLocked = data.locked !== false; // 필드 없으면 잠김으로 간주 (R1)
     recomputeRole();
     if (snap.metadata.hasPendingWrites) return; // 내가 방금 쓴 변경은 무시(루프 방지)
     if (data.state) {
@@ -1374,7 +1440,9 @@ async function createGame() {
     await ref.set({
       hostUid: auth.currentUser.uid,
       hostName: auth.currentUser.displayName || '',
+      locked: true, // 신규 방은 항상 잠김 상태로 생성 (R1)
       state: fresh,
+      lastEditedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     location.search = '?room=' + today;
@@ -1464,7 +1532,9 @@ async function onDateInputChange() {
     await db.collection('rooms').doc(newDate).set({
       hostUid: roomHostUid || auth.currentUser.uid,
       hostName: auth.currentUser.displayName || '',
+      locked: (typeof roomLocked === 'boolean' ? roomLocked : true), // 잠금 상태는 그대로 승계
       state: newState,
+      lastEditedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch (e) {
@@ -1516,7 +1586,7 @@ async function renderLobby() {
       const data = doc.data() || {};
       const st = data.state || {};
       const names = Array.isArray(st.participants) ? st.participants.map(p => p.name) : [];
-      rooms.push({ id: doc.id, date: st.date || doc.id, players: names });
+      rooms.push({ id: doc.id, date: st.date || doc.id, players: names, locked: data.locked !== false });
     });
     rooms.sort((a, b) => b.id.localeCompare(a.id)); // 날짜(ID) 내림차순 = 최신순
     countEl.textContent = `총 ${rooms.length}회`;
@@ -1542,6 +1612,7 @@ function lobbyCard(r, i) {
       <div class="lobby-card-top">
         <span class="lobby-date">${formatDateKor(r.date)}</span>
         <span class="dow">${dowKor(r.date)}</span>
+        <span class="room-badge ${r.locked ? 'locked' : 'open'}">${r.locked ? '🔒 잠김' : '🔓 열림'}</span>
         <span style="flex:1"></span>
         <button class="lobby-del" onclick="event.stopPropagation(); deleteGame('${r.id}', true)">삭제</button>
         <span class="lobby-chevron">&rsaquo;</span>
@@ -1557,12 +1628,19 @@ function lobbyCard(r, i) {
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); // 로컬 캐시 유지
-  if (roomId && isHost && !applyingRemote) {
+  const canEdit = isHost || roomLocked === false; // R6: 마스터 또는 열린 방이면 저장 가능
+  if (roomId && canEdit && !applyingRemote) {
     roomRef().set({
-      hostUid: roomHostUid || auth.currentUser.uid,
+      hostUid: roomHostUid || (auth.currentUser && auth.currentUser.uid),
       state: state,
+      lastEditedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true }).catch(e => console.error('저장 오류', e));
+    }, { merge: true }).catch(e => {
+      console.error('저장 오류', e);
+      if (e.code === 'permission-denied') {
+        alert('이 방은 잠겨 있어요. 마스터에게 열어달라고 요청해주세요.');
+      }
+    });
   }
 }
 
