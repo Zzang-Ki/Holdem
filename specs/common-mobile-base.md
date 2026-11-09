@@ -1,5 +1,5 @@
 # 모바일 공통 기본기 (입력 확대 방지·글자 크기·터치 영역)
-상태: 확정 (2026-11-10)
+상태: 완료 (2026-11-10 구현, feature/mobile-ui)
 
 ## 목적 (한 줄)
 모든 페이지에서 입력칸 탭 시 iOS 자동 확대를 없애고, 너무 작은 글씨·터치 영역을 모바일 최소 기준으로 끌어올린다.
@@ -23,12 +23,16 @@
   - 현재 미달: `.collapse-toggle` 26×26, `#host-bar .host-login-link` 높이 17px
 
 ## 완료 조건 (무인 실행 시 스스로 검증할 기준)
-- [ ] 375px 뷰포트에서 4개 페이지 모든 `input/select/textarea`의 `getComputedStyle().fontSize`가 16px 이상인지 JS로 확인
-- [ ] 4개 페이지 viewport 메타에 `maximum-scale`/`user-scalable=no`가 없는지 확인
-- [ ] 375px 뷰포트에서 화면에 보이는 텍스트 노드 중 fontSize < 12px인 요소 목록을 뽑아, 예외(핸드 격자 셀)만 남는지 확인
-- [ ] `.collapse-toggle`, `.host-login-link`의 클릭 가능 영역이 40×40px 이상인지 확인
-- [ ] 데스크톱(1280px)에서 레이아웃이 기존과 눈에 띄게 달라지지 않았는지 스크린샷으로 확인
-- [ ] 정산 결과 이미지 공유(html2canvas) 결과물이 깨지지 않는지 확인
+- [x] 375px 뷰포트에서 4개 페이지 모든 `input/select/textarea`의 `getComputedStyle().fontSize`가 16px 이상인지 JS로 확인 — 정산 방(마스터 UI 포함)·딜 계산기 모두 16px. Push/Fold·Hand Ranking은 입력칸 없음
+- [x] 4개 페이지 viewport 메타에 `maximum-scale`/`user-scalable=no`가 없는지 확인
+- [x] 375px 뷰포트에서 화면에 보이는 텍스트 노드 중 fontSize < 12px인 요소 목록을 뽑아, 예외(핸드 격자 셀)만 남는지 확인 — index(뷰어/마스터)·딜 계산기 0건, Push/Fold·Hand Ranking은 `.cell`만 남음
+- [x] `.collapse-toggle`, `.host-login-link`의 클릭 가능 영역이 40×40px 이상인지 확인 — 40×40, 78×40
+- [~] 데스크톱(1280px)에서 레이아웃이 기존과 눈에 띄게 달라지지 않았는지 스크린샷으로 확인 — Browser 패널이 숨겨져 있어 스크린샷 대신 JS 측정으로 확인(정산 표 헤더 table-header-group 유지, 모바일 요약 숨김, 가로 스크롤 없음). 육안 확인은 PR 리뷰 때 필요
+- [~] 정산 결과 이미지 공유(html2canvas) 결과물이 깨지지 않는지 확인 — 캡처 함수는 수정하지 않았고, 캡처 클래스(`force-desktop-capture`) 적용 시 새 요약이 숨겨지는 것까지 확인. 실제 이미지 생성은 미확인
+
+### 검증 메모 (2026-11-10)
+- 터치 영역은 스펙이 지목한 2곳 외에 마스터 전용 버튼(세션 공유/삭제, 비용 삭제, 날짜 수정/삭제, 잠금 토글, 딜 계산기 ± 스테퍼)도 40px로 올렸다. 바인 스테퍼(36px)와 참가자 칩 ×는 레이아웃 폭 때문에 시각 크기는 두고 히트 영역만 확장
+- Push/Fold·Hand Ranking의 옵션 칩(높이 약 31px)은 간격이 좁아 히트 영역 확장 시 오탭 위험이 있어 이번에 손대지 않음 — 필요하면 별도 논의
 
 ## 제외 범위 (이번에 안 하는 것)
 - 레이아웃 구조 변경 (각 페이지 개별 스펙에서 다룸)

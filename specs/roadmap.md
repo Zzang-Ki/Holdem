@@ -8,11 +8,11 @@
 | hand-ranking.md | 완료 | 169개 스타팅 핸드 세기 순서를 6등급 색 격자로 보여주는 독립 페이지 (2026-07-25 배포) |
 | deal-prize-split.md | 완료 | 보유 칩 기준 상금 분배(간편/ICM) 계산기, 독립 페이지 (2026-08-06 배포) |
 | room-lock.md | 완료 | 정산 방 잠금/열림 — 익명 인증 도입 + Firestore 보안 규칙으로 마스터 부재 시 참가자 편집 개방 (2026-08-07) |
-| common-mobile-base.md | 확정 | 전 페이지 입력칸 16px(iOS 자동 확대 방지)·최소 글자 12px·터치 영역 40px·핀치 줌 허용 |
-| ledger-mobile-layout.md | 확정 | 정산 방 상단바 2줄 배치(날짜 깨짐 수정) + 최종 정산 상단 요약 + 하단 툴바 safe-area |
-| pushfold-mobile-layout.md | 확정 | 폰에서 설정 변경 시 차트가 바로 보이도록 설정 영역 압축(가로 스크롤) 또는 결과 고정 |
-| deal-mobile-input.md | 확정 | 딜 계산기 칩 입력칸 폭 수정(선택자 충돌 추정) + placeholder |
-| common-nav-header.md | 확정 | 홈 외 전 화면 공통 얇은 상단바로 뒤로가기/헤더 통일, 큰 로고 반복 제거 |
+| common-mobile-base.md | 완료 | 전 페이지 입력칸 16px(iOS 자동 확대 방지)·최소 글자 12px·터치 영역 40px·핀치 줌 허용 |
+| ledger-mobile-layout.md | 완료 | 정산 방 상단바 2줄 배치(날짜 깨짐 수정) + 최종 정산 상단 요약 + 하단 툴바 safe-area |
+| pushfold-mobile-layout.md | 완료 | 폰에서 설정 변경 시 차트가 바로 보이도록 설정 영역 압축(가로 스크롤) 또는 결과 고정 |
+| deal-mobile-input.md | 완료 | 딜 계산기 칩 입력칸 폭 수정(선택자 충돌 추정) + placeholder |
+| common-nav-header.md | 완료 | 홈 외 전 화면 공통 얇은 상단바로 뒤로가기/헤더 통일, 큰 로고 반복 제거 |
 
 ## 백로그 (아직 스펙 파일 없음)
 - 스트럭쳐 자동 설계 도우미 — 초안
