@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#EAF1FC">
 <title>Holdem Mates</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1105,11 +1105,90 @@
     #host-bar .host-login-link { display:inline-flex; align-items:center; min-height:40px; padding:0 4px; }
   }
   /* ===== /모바일 공통 기본기 ===== */
+
+  /* ===== 정산 화면 모바일 레이아웃 (specs/ledger-mobile-layout.md) ===== */
+  /* R1. 상세 상단바: 날짜는 줄바꿈 금지, 모바일은 1줄 날짜 / 2줄 배지+버튼 */
+  .detail-date .d-text{ white-space:nowrap; }
+  @media (max-width:600px){
+    .detail-topbar{ flex-wrap:wrap; gap:10px 8px; padding:12px; }
+    .detail-topbar .detail-date{ flex:1 0 100%; }
+    .detail-topbar .lock-toggle-btn{ margin-left:0; }
+  }
+
+  /* R2. 최종 정산 상단 요약 — 모바일 전용, 이미지 공유(데스크톱 폭 캡처)에는 넣지 않는다 */
+  .settle-summary{ display:none; }
+  @media (max-width:768px){
+    .settle-summary{ display:block; background:#fff; border:1px solid var(--border); border-radius:8px; padding:2px 14px; margin-bottom:14px; box-shadow:0 2px 8px rgba(30,36,51,.05); }
+    .settle-summary:empty{ display:none; }
+    .ss-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:15px; }
+    .ss-row:last-child{ border-bottom:none; }
+    .ss-name{ font-weight:700; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ss-amount{ font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .ss-amount.profit{ color:var(--green); }
+    .ss-amount.loss{ color:var(--red); }
+    .ss-amount.zero{ color:var(--text-dim); }
+    .ss-kor{ margin-left:6px; font-size:12px; font-weight:500; color:var(--text-dim); }
+  }
+  .force-desktop-capture .settle-summary{ display:none !important; }
+
+  /* R3. iPhone 홈 인디케이터/노치 safe-area (viewport-fit=cover와 짝) */
+  :root{ --pad-x:20px; }
+  @media (max-width:768px){ :root{ --pad-x:12px; } }
+  body{
+    padding-left:max(var(--pad-x), env(safe-area-inset-left));
+    padding-right:max(var(--pad-x), env(safe-area-inset-right));
+  }
+  .hero-banner{
+    margin-left:calc(-1 * max(var(--pad-x), env(safe-area-inset-left)));
+    margin-right:calc(-1 * max(var(--pad-x), env(safe-area-inset-right)));
+  }
+  .toolbar-fixed{
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    padding-left:max(20px, env(safe-area-inset-left));
+    padding-right:max(20px, env(safe-area-inset-right));
+  }
+  .footer-spacer{ height:calc(130px + env(safe-area-inset-bottom)); }
+  @media (max-width:768px){
+    .toolbar-fixed{
+      padding-bottom:calc(10px + env(safe-area-inset-bottom));
+      padding-left:max(12px, env(safe-area-inset-left));
+      padding-right:max(12px, env(safe-area-inset-right));
+    }
+    .footer-spacer{ height:calc(120px + env(safe-area-inset-bottom)); }
+  }
+  /* ===== /정산 화면 모바일 레이아웃 ===== */
+
+  /* ===== 공통 상단바 (specs/common-nav-header.md) ===== */
+  /* 홈은 큰 히어로, 그 외 화면은 같은 요소를 얇은 바(.hm-topbar)로 축소: 왼쪽 뒤로가기 / 가운데 브랜드 / 오른쪽 유저영역 */
+  .hero-banner .hm-back{ display:none; }
+  .hero-banner.hm-topbar{ flex-direction:row; justify-content:center; padding:0 16px; min-height:52px; margin-bottom:16px; }
+  .hero-banner.hm-topbar .hero-logo{ flex-direction:row; align-items:center; gap:6px; }
+  .hero-banner.hm-topbar .hm-spade{ width:22px; height:22px; }
+  .hero-banner.hm-topbar .hm-wordmark{ width:96px; }
+  .hm-back{
+    align-items:center; gap:4px; height:40px; padding:0 12px; border-radius:9px;
+    background:var(--bg-card); border:1px solid var(--border); color:var(--gold);
+    font-size:13px; font-weight:700; cursor:pointer; text-transform:none; letter-spacing:0;
+    position:absolute; top:50%; transform:translateY(-50%);
+    left:max(var(--pad-x), env(safe-area-inset-left));
+  }
+  .hm-back:hover{ border-color:var(--gold); background:#fff; color:var(--gold); }
+  body.lobby-mode .hero-banner.hm-topbar .hm-back-home,
+  body.detail-mode .hero-banner.hm-topbar .hm-back-list{ display:inline-flex; }
+  .hero-banner.hm-topbar #host-bar{ top:50%; transform:translateY(-50%); right:max(var(--pad-x), env(safe-area-inset-right)); }
+  /* 좁은 화면 + 마스터 로그인 상태(유저영역이 넓음)는 브랜드를 스페이드만 남긴다 */
+  @media (max-width:400px){
+    body:not(.not-host) .hero-banner.hm-topbar .hm-wordmark{ display:none; }
+  }
+  /* ===== /공통 상단바 ===== */
 </style>
 </head>
 <body>
 <!-- ===== HERO BANNER (HoldemMates) ===== -->
 <div class="hero-banner">
+  <!-- 공통 상단바 뒤로가기 (홈 외 화면에서만 표시 — specs/common-nav-header.md) -->
+  <button class="hm-back hm-back-home" onclick="goHome()">← 홈</button>
+  <button class="hm-back hm-back-list" onclick="goLobby()">← 목록</button>
   <div id="host-bar"></div>
   <div class="hero-logo">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="hm-spade" aria-hidden="true">
@@ -1131,9 +1210,6 @@
 
 <!-- ===== Lobby (리스트 화면) ===== -->
 <div class="container" id="lobby-view">
-  <div class="detail-topbar">
-    <button class="back-btn" onclick="goHome()">← 홈</button>
-  </div>
   <div class="lobby-head">
     <div class="lobby-title">게임 기록</div>
     <span class="lobby-count" id="lobby-count">총 0회</span>
@@ -1147,7 +1223,6 @@
 
 <!-- Detail Top Bar -->
 <div class="detail-topbar">
-  <button class="back-btn" onclick="goLobby()">← 목록</button>
   <span class="detail-date" id="detail-date-display">
     <span class="d-text">—</span>
     <span class="dow">—</span>
@@ -1204,6 +1279,8 @@
   <div class="section-title">최종 정산</div>
 
   <div class="settlement-date" id="settlement-date-display"></div>
+
+  <div class="settle-summary" id="settle-summary"></div>
 
   <table class="settlement-table">
     <thead>
@@ -2148,9 +2225,21 @@ function renderSummary() {
 
   // 정산 테이블
   const tbody = document.getElementById('settlement-body');
+  const summaryEl = document.getElementById('settle-summary');
   if (state.participants.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty">참가자가 없어요</td></tr>';
+    if (summaryEl) summaryEl.innerHTML = '';
   } else {
+    // 모바일 전용 최종 정산 요약 (specs/ledger-mobile-layout.md R2) — 아래 표와 같은 값, 같은 순서
+    if (summaryEl) {
+      summaryEl.innerHTML = state.participants.map(p => {
+        const s = playerStats[p.id];
+        const final = s.actualPnl - expenseShare[p.id] + paymentRefund[p.id];
+        const cls = final > 0 ? 'profit' : final < 0 ? 'loss' : 'zero';
+        const kor = final !== 0 ? (final > 0 ? '+' : '−') + fmtKor(Math.abs(final)) : '';
+        return `<div class="ss-row"><span class="ss-name">${escapeHtml(p.name)}</span><span class="ss-amount ${cls}">${final > 0 ? '+' : ''}${fmt(final)}${kor ? `<span class="ss-kor">${kor}</span>` : ''}</span></div>`;
+      }).join('');
+    }
     tbody.innerHTML = state.participants.map((p, idx) => {
       const s = playerStats[p.id];
       const share = expenseShare[p.id];
@@ -2531,6 +2620,8 @@ document.getElementById('reset-modal').addEventListener('click', e => {
 });
 
 function boot() {
+  // 홈 외 화면은 히어로를 얇은 공통 상단바로 축소 (specs/common-nav-header.md)
+  if (viewMode !== 'home') document.querySelector('.hero-banner').classList.add('hm-topbar');
   if (viewMode === 'detail') {
     document.body.classList.add('detail-mode');
     document.body.classList.remove('lobby-mode', 'home-mode');
