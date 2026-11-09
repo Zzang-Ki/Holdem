@@ -1082,6 +1082,29 @@
   .date-del-btn{ margin-left:6px; background:transparent; border:1px solid var(--border); border-radius:8px; width:34px; height:34px; padding:0; color:var(--red); font-size:14px; cursor:pointer; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
   .date-del-btn:hover{ border-color:var(--red); background:rgba(214,58,74,.08); }
   body.not-host .date-del-btn{ display:none !important; }
+
+  /* ===== 모바일 공통 기본기 (specs/common-mobile-base.md) ===== */
+  @media (max-width:768px){
+    /* iOS Safari는 16px 미만 입력칸에 포커스하면 화면을 자동 확대한다 */
+    input, select, textarea { font-size:16px !important; }
+
+    /* 정보성 텍스트 최소 12px */
+    .session-card tbody td::before,
+    .settlement-table tbody td::before { font-size:12px; letter-spacing:.5px; }
+    .kor-unit, .session-ok, .btn-small, .btn-share-session,
+    .btn-danger, .collapse-toggle { font-size:12px; }
+
+    /* 터치 영역 최소 40px — 시각 크기를 키우기 곤란한 곳은 히트 영역만 확장 */
+    .btn-small, .btn-share-session, .btn-delete-session, .exp-item-del { min-height:40px; }
+    .date-edit-btn, .date-del-btn { width:40px; height:40px; }
+    .lock-toggle-btn { height:40px; }
+    .collapse-toggle { width:40px; height:40px; margin:-7px; }
+    .step-btn { position:relative; }
+    .step-btn::after { content:''; position:absolute; inset:-3px; }
+    .player-chip button { padding:10px; margin:-10px -10px -10px -6px; }
+    #host-bar .host-login-link { display:inline-flex; align-items:center; min-height:40px; padding:0 4px; }
+  }
+  /* ===== /모바일 공통 기본기 ===== */
 </style>
 </head>
 <body>
